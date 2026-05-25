@@ -319,54 +319,56 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="sticky bottom-0 z-10 h-16 px-2 md:px-8 bg-white/95 supports-[backdrop-filter]:bg-white/80 backdrop-blur border-t border-[#efefef] shadow-[0_-6px_18px_rgba(30,30,30,0.05)] flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] shrink-0"
-          >
-            Invite
-          </button>
-          <input
-            value={input}
-            onChange={(e) => {
-              const nextValue = e.target.value.slice(0, MAX_MESSAGE_LENGTH);
-              setInput(nextValue);
-              const client = stompClientRef.current;
-              if (client?.connected) {
-                client.publish({
-                  destination: `/app/typing/${roomId}`,
-                  body: JSON.stringify({ sender: currentUser, roomId, typing: nextValue.trim().length > 0 }),
-                });
-                if (typingTimeoutRef.current) {
-                  clearTimeout(typingTimeoutRef.current);
-                }
-                typingTimeoutRef.current = setTimeout(() => {
+        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] bg-transparent">
+          <div className="rounded-2xl bg-white/95 supports-[backdrop-filter]:bg-white/85 backdrop-blur border border-[#ebe8e2] shadow-[0_8px_22px_rgba(30,30,30,0.08)] px-2 md:px-3 py-2 flex items-center gap-2">
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] shrink-0"
+            >
+              Invite
+            </button>
+            <input
+              value={input}
+              onChange={(e) => {
+                const nextValue = e.target.value.slice(0, MAX_MESSAGE_LENGTH);
+                setInput(nextValue);
+                const client = stompClientRef.current;
+                if (client?.connected) {
                   client.publish({
                     destination: `/app/typing/${roomId}`,
-                    body: JSON.stringify({ sender: currentUser, roomId, typing: false }),
+                    body: JSON.stringify({ sender: currentUser, roomId, typing: nextValue.trim().length > 0 }),
                   });
-                }, 1200);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !cannotSend) sendMessage();
-            }}
-            type="text"
-            placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
-            className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] text-sm placeholder:text-[#9195a1]"
-          />
-          <div className={`block text-[10px] md:text-[11px] w-14 text-right shrink-0 ${counterTextClass}`}>
-            {inputLength}/{MAX_MESSAGE_LENGTH}
+                  if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                  }
+                  typingTimeoutRef.current = setTimeout(() => {
+                    client.publish({
+                      destination: `/app/typing/${roomId}`,
+                      body: JSON.stringify({ sender: currentUser, roomId, typing: false }),
+                    });
+                  }, 1200);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !cannotSend) sendMessage();
+              }}
+              type="text"
+              placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
+              className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] text-sm placeholder:text-[#9195a1]"
+            />
+            <div className={`block text-[10px] md:text-[11px] w-14 text-right shrink-0 ${counterTextClass}`}>
+              {inputLength}/{MAX_MESSAGE_LENGTH}
+            </div>
+            <button
+              onClick={sendMessage}
+              disabled={cannotSend}
+              className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] ${
+                cannotSend ? "bg-[#ddd] text-[#999]" : "bg-[var(--peach-strong)] text-white"
+              }`}
+            >
+              <MdSend size={18} />
+            </button>
           </div>
-          <button
-            onClick={sendMessage}
-            disabled={cannotSend}
-            className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] ${
-              cannotSend ? "bg-[#ddd] text-[#999]" : "bg-[var(--peach-strong)] text-white"
-            }`}
-          >
-            <MdSend size={18} />
-          </button>
         </div>
         <div className="px-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[11px] text-[var(--muted)] min-h-6 truncate">
           {typingLabel}
