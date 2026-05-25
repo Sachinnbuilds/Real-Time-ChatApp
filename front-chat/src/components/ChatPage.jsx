@@ -70,6 +70,18 @@ const ChatPage = () => {
         setConnectionState("CONNECTED");
         setShowReconnectToast(true);
         toast.success("Connected");
+        client.subscribe(`/user/queue/system`, (message) => {
+          const payload = JSON.parse(message.body);
+          if (!payload?.code) return;
+          toast.error(payload.message || "Unable to stay connected to this room");
+          if (stompClientRef.current?.active) {
+            stompClientRef.current.deactivate();
+          }
+          setConnected(false);
+          setRoomId("");
+          setCurrentUser("");
+          navigate("/");
+        });
         client.subscribe(`/topic/room/${roomId}`, (message) => {
           const newMessage = JSON.parse(message.body);
           setMessages((prev) => [...prev, newMessage]);

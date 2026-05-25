@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @CrossOrigin("${app.frontend.url}")
 public class ChatController {
 
+    private static final int MAX_ACTIVE_ROOM_MEMBERS = 5;
 
     private final RoomRepository roomRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -82,6 +83,17 @@ public class ChatController {
         }
         String sessionId = headerAccessor.getSessionId();
         if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+        Room room = roomRepository.findByRoomId(roomId);
+        if (room == null) {
+            sendSystemEventToSession(sessionId, "ROOM_CLOSED", "Room is closed. Create or join another room.");
+            return;
+        }
+        Map<String, String> sessionsInRoom = roomParticipantsBySession.getOrDefault(roomId, Map.of());
+        boolean alreadyInRoom = sessionsInRoom.containsKey(sessionId);
+        if (!alreadyInRoom && sessionsInRoom.size() >= MAX_ACTIVE_ROOM_MEMBERS) {
+            sendSystemEventToSession(sessionId, "ROOM_FULL", "Room is full (max 5 people). Try another room.");
             return;
         }
         sessionToRoom.put(sessionId, roomId);
@@ -160,8 +172,29 @@ public class ChatController {
             sessions.remove(sessionId);
             if (sessions.isEmpty()) {
                 roomParticipantsBySession.remove(roomId);
+                clearRoomData(roomId);
             }
         }
         broadcastPresence(roomId);
+    }
+
+    private void clearRoomData(String roomId) {
+        Room room = roomRepository.findByRoomId(roomId);
+        if (room != null) {
+            roomRepository.delete(room);
+        }
+    }
+
+    private void sendSystemEventToSession(String sessionId, String code, String message) {
+        Map<String, String> event = new HashMap<>();
+        event.put("code", code);
+        event.put("message", message);
+        messagingTemplate.convertAndSendToUser(sessionId, "/queue/system", event, createHeaders(sessionId));
+    }
+
+    private Map<String, Object> createHeaders(String sessionId) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put("simpSessionId", sessionId);
+        return headers;
     }
 }
