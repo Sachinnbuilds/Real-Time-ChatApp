@@ -279,19 +279,19 @@ const ChatPage = () => {
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Room</p>
               <h1 className="font-extrabold text-xl md:text-4xl leading-tight truncate">{roomId}</h1>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1.5 md:gap-2">
               <div
-                className={`h-10 min-w-[122px] rounded-xl px-4 inline-flex items-center justify-center text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}
+                className={`h-9 md:h-10 rounded-lg md:rounded-xl px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] md:min-w-[122px] ${statusBadgeClass}`}
               >
                 {statusText}
               </div>
-              <div className="h-10 min-w-[122px] rounded-xl bg-white/8 border border-white/10 px-4 inline-flex items-center justify-center gap-2">
-                <span className="text-sm text-slate-300">Online</span>
-                <span className="text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
+              <div className="h-9 md:h-10 rounded-lg md:rounded-xl bg-white/8 border border-white/10 px-2.5 md:px-4 inline-flex items-center justify-center gap-1.5 md:gap-2 whitespace-nowrap md:min-w-[122px]">
+                <span className="text-xs md:text-sm text-slate-300">Online</span>
+                <span className="text-xs md:text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="h-10 min-w-[146px] rounded-xl bg-white text-[var(--ink)] px-4 inline-flex items-center justify-center text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                className="h-9 md:h-10 rounded-lg md:rounded-xl bg-white text-[var(--ink)] px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:min-w-[146px]"
               >
                 Leave Room
               </button>
