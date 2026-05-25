@@ -16,22 +16,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-
         config.enableSimpleBroker("/topic");
-        // /topic/messages
-
         config.setApplicationDestinationPrefixes("/app");
-        // /app/chat
-        // server-side: @MessagingMapping("/chat)
-
-
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/chat")//connection establishment
-                .setAllowedOrigins(frontendUrl)
+        registry.addEndpoint("/chat")
+                .setAllowedOriginPatterns(frontendUrl, "https://*.vercel.app", "https://*.netlify.app")
                 .withSockJS();
     }
-    // /chat endpoint par connection apka establish hoga
 }

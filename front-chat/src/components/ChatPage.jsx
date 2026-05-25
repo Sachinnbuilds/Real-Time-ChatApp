@@ -30,9 +30,8 @@ const ChatPage = () => {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const inputRef = useRef(null);
   const chatBoxRef = useRef(null);
-  const [stompClient, setStompClient] = useState(null);
+  const stompClientRef = useRef(null);
 
   //page init:
   //messages ko load karne honge
@@ -43,12 +42,14 @@ const ChatPage = () => {
         const messages = await getMessagess(roomId);
         // console.log(messages);
         setMessages(messages);
-      } catch (error) {}
+      } catch (error) {
+        toast.error("Failed to load messages");
+      }
     }
-    if (connected) {
+    if (connected && roomId) {
       loadMessages();
     }
-  }, []);
+  }, [connected, roomId]);
 
   //scroll down
 
@@ -65,39 +66,46 @@ const ChatPage = () => {
   //subscribe
 
   useEffect(() => {
-    const connectWebSocket = () => {
-      ///SockJS
-      const sock = new SockJS(`${baseURL}/chat`);
-      const client = Stomp.over(sock);
-
-      client.connect({}, () => {
-        setStompClient(client);
-
-        toast.success("connected");
-
-        client.subscribe(`/topic/room/${roomId}`, (message) => {
-          console.log(message);
-
-          const newMessage = JSON.parse(message.body);
-
-          setMessages((prev) => [...prev, newMessage]);
-
-          //rest of the work after success receiving the message
-        });
-      });
-    };
-
-    if (connected) {
-      connectWebSocket();
+    if (!connected || !roomId) {
+      return undefined;
     }
 
-    //stomp client
-  }, [roomId]);
+    const client = new Stomp.Client({
+      webSocketFactory: () => new SockJS(`${baseURL}/chat`),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      onConnect: () => {
+        toast.success("Connected");
+        client.subscribe(`/topic/room/${roomId}`, (message) => {
+          const newMessage = JSON.parse(message.body);
+          setMessages((prev) => [...prev, newMessage]);
+        });
+      },
+      onStompError: () => {
+        toast.error("WebSocket error");
+      },
+      onWebSocketClose: () => {
+        toast("Reconnecting...");
+      },
+    });
+
+    stompClientRef.current = client;
+    client.activate();
+
+    return () => {
+      if (client.active) {
+        client.deactivate();
+      }
+      stompClientRef.current = null;
+    };
+  }, [connected, roomId]);
 
   //send message handle
 
   const sendMessage = async () => {
-    if (stompClient && connected && input.trim()) {
+    const client = stompClientRef.current;
+    if (client?.connected && connected && input.trim()) {
       console.log(input);
 
       const message = {
@@ -106,11 +114,10 @@ const ChatPage = () => {
         roomId: roomId,
       };
 
-      stompClient.send(
-        `/app/sendMessage/${roomId}`,
-        {},
-        JSON.stringify(message)
-      );
+      client.publish({
+        destination: `/app/sendMessage/${roomId}`,
+        body: JSON.stringify(message),
+      });
       setInput("");
     }
 
@@ -118,7 +125,9 @@ const ChatPage = () => {
   };
 
   function handleLogout() {
-    stompClient.disconnect();
+    if (stompClientRef.current?.active) {
+      stompClientRef.current.deactivate();
+    }
     setConnected(false);
     setRoomId("");
     setCurrentUser("");
