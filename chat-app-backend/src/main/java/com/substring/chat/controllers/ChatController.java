@@ -48,12 +48,17 @@ public class ChatController {
     @SendTo("/topic/room/{roomId}")//subscribe
     public Message sendMessage(
             @DestinationVariable String roomId,
-            @Valid @RequestBody MessageRequest request
+            @Valid @RequestBody MessageRequest request,
+            SimpMessageHeaderAccessor headerAccessor
     ) {
 
         Room room = roomRepository.findByRoomId(request.getRoomId());
         if (!roomId.equals(request.getRoomId())) {
             throw new IllegalArgumentException("Room id mismatch in request");
+        }
+        String sessionId = headerAccessor.getSessionId();
+        if (sessionId == null || sessionId.isBlank() || !presenceTracker.isSessionInRoom(sessionId, roomId)) {
+            throw new IllegalArgumentException("Not an active member of this room");
         }
         Message message = new Message();
         message.setContent(request.getContent());
@@ -125,10 +130,18 @@ public class ChatController {
     }
 
     @MessageMapping("/typing/{roomId}")
-    public void typing(@DestinationVariable String roomId, @Payload Map<String, Object> request) {
+    public void typing(
+            @DestinationVariable String roomId,
+            @Payload Map<String, Object> request,
+            SimpMessageHeaderAccessor headerAccessor
+    ) {
         String sender = String.valueOf(request.getOrDefault("sender", "")).trim();
         String requestRoomId = String.valueOf(request.getOrDefault("roomId", "")).trim();
         if (sender.isEmpty() || !roomId.equals(requestRoomId)) {
+            return;
+        }
+        String sessionId = headerAccessor.getSessionId();
+        if (sessionId == null || sessionId.isBlank() || !presenceTracker.isSessionInRoom(sessionId, roomId)) {
             return;
         }
         boolean typing = Boolean.parseBoolean(String.valueOf(request.getOrDefault("typing", false)));
