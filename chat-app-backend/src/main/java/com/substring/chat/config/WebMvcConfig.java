@@ -9,7 +9,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Applies CORS protection globally to your REST controllers
+        registry.addMapping("/**") // Changed from /api/** to /** to catch absolutely everything
                 .allowedOrigins("https://real-time-chat-app-git-main-sachin-rameshs-projects.vercel.app")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
