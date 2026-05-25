@@ -27,6 +27,17 @@ const JoinCreateChat = () => {
     }));
   }, [inviteRoomId]);
 
+  function getReadableError(error) {
+    const code = error?.response?.data?.code;
+    const message = error?.response?.data?.message;
+    const hint = error?.response?.data?.hint;
+    if (code === "ROOM_NOT_FOUND") return "Room not found. Ask your friend to create it again.";
+    if (code === "ROOM_FULL") return "Room is full (max 5 people). Try another room.";
+    if (code === "USERNAME_TAKEN") return "Username already in use in this room. Pick another name.";
+    if (code === "ROOM_EXISTS") return "Room already exists. Use Join or choose another room id.";
+    return message || hint || "Something went wrong. Please try again.";
+  }
+
   function handleFormInputChange(event) {
     setDetail({
       ...detail,
@@ -65,8 +76,8 @@ const JoinCreateChat = () => {
       setConnected(true);
       navigate("/chat");
     } catch (error) {
-      if (error?.response?.status === 400) {
-        toast.error(error?.response?.data?.message || "Unable to join room");
+      if (error?.response) {
+        toast.error(getReadableError(error));
       } else {
         toast.error("Error in joining room");
       }
@@ -88,8 +99,8 @@ const JoinCreateChat = () => {
       setConnected(true);
       navigate("/chat");
     } catch (error) {
-      if (error?.response?.status === 400) {
-        toast.error(error?.response?.data?.message || "Room already exists");
+      if (error?.response) {
+        toast.error(getReadableError(error));
       } else {
         toast.error("Error in creating room");
       }

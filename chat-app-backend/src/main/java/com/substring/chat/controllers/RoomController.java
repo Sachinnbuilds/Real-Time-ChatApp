@@ -2,6 +2,7 @@ package com.substring.chat.controllers;
 
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
+import com.substring.chat.exceptions.AppException;
 import com.substring.chat.repositories.RoomRepository;
 import com.substring.chat.service.PresenceTracker;
 import org.springframework.http.HttpStatus;
@@ -33,8 +34,12 @@ public class RoomController {
         }
 
         if (roomRepository.findByRoomId(normalizedRoomId) != null) {
-            //room is already there
-            throw new IllegalArgumentException("Room already exists!");
+            throw new AppException(
+                    "ROOM_EXISTS",
+                    "Room already exists.",
+                    "Use Join to enter the room or create a new room id.",
+                    HttpStatus.CONFLICT
+            );
         }
 
 
@@ -57,17 +62,32 @@ public class RoomController {
 
         Room room = roomRepository.findByRoomId(roomId);
         if (room == null) {
-            throw new IllegalArgumentException("Room not found");
+            throw new AppException(
+                    "ROOM_NOT_FOUND",
+                    "Room not found.",
+                    "Ask your friend to create this room again.",
+                    HttpStatus.NOT_FOUND
+            );
         }
         String normalizedUsername = username == null ? "" : username.trim();
         if (normalizedUsername.length() < 2 || normalizedUsername.length() > 40) {
             throw new IllegalArgumentException("Username must be between 2 and 40 characters");
         }
         if (presenceTracker.getActiveSessionCount(roomId) >= PresenceTracker.MAX_ACTIVE_ROOM_MEMBERS) {
-            throw new IllegalArgumentException("Room is full (max 5 people). Try another room.");
+            throw new AppException(
+                    "ROOM_FULL",
+                    "Room is full (max 5 people).",
+                    "Try another room or wait for someone to leave.",
+                    HttpStatus.CONFLICT
+            );
         }
         if (presenceTracker.isUsernameTaken(roomId, normalizedUsername)) {
-            throw new IllegalArgumentException("Username already in use in this room");
+            throw new AppException(
+                    "USERNAME_TAKEN",
+                    "Username already in use in this room.",
+                    "Choose a different username and try again.",
+                    HttpStatus.CONFLICT
+            );
         }
         return ResponseEntity.ok(room);
     }

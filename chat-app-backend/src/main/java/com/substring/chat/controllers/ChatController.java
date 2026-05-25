@@ -2,10 +2,12 @@ package com.substring.chat.controllers;
 
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
+import com.substring.chat.exceptions.AppException;
 import com.substring.chat.playload.MessageRequest;
 import jakarta.validation.Valid;
 import com.substring.chat.repositories.RoomRepository;
 import com.substring.chat.service.PresenceTracker;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -58,7 +60,12 @@ public class ChatController {
         }
         String sessionId = headerAccessor.getSessionId();
         if (sessionId == null || sessionId.isBlank() || !presenceTracker.isSessionInRoom(sessionId, roomId)) {
-            throw new IllegalArgumentException("Not an active member of this room");
+            throw new AppException(
+                    "NOT_ACTIVE_MEMBER",
+                    "Not an active member of this room.",
+                    "Rejoin the room and try sending again.",
+                    HttpStatus.FORBIDDEN
+            );
         }
         Message message = new Message();
         message.setContent(request.getContent());
@@ -68,7 +75,12 @@ public class ChatController {
             room.getMessages().add(message);
             roomRepository.save(room);
         } else {
-            throw new RuntimeException("room not found !!");
+            throw new AppException(
+                    "ROOM_CLOSED",
+                    "Room is closed.",
+                    "Create or join another room.",
+                    HttpStatus.NOT_FOUND
+            );
         }
 
         return message;
