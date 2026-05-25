@@ -20,8 +20,11 @@ const ChatPage = () => {
   const [connectionState, setConnectionState] = useState("CONNECTING");
   const [showReconnectToast, setShowReconnectToast] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [participants, setParticipants] = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!connected) {
@@ -69,6 +72,26 @@ const ChatPage = () => {
           const newMessage = JSON.parse(message.body);
           setMessages((prev) => [...prev, newMessage]);
         });
+        client.subscribe(`/topic/room/${roomId}/presence`, (message) => {
+          const payload = JSON.parse(message.body);
+          setParticipants(Array.isArray(payload.participants) ? payload.participants : []);
+        });
+        client.subscribe(`/topic/room/${roomId}/typing`, (message) => {
+          const payload = JSON.parse(message.body);
+          if (!payload?.sender || payload.sender === currentUser) {
+            return;
+          }
+          setTypingUsers((prev) => {
+            if (payload.typing) {
+              return prev.includes(payload.sender) ? prev : [...prev, payload.sender];
+            }
+            return prev.filter((user) => user !== payload.sender);
+          });
+        });
+        client.publish({
+          destination: `/app/presence/join/${roomId}`,
+          body: JSON.stringify({ sender: currentUser, roomId }),
+        });
       },
       onStompError: () => {
         setConnectionState("ERROR");
@@ -88,10 +111,23 @@ const ChatPage = () => {
     client.activate();
 
     return () => {
+      if (client.connected) {
+        client.publish({
+          destination: `/app/presence/leave/${roomId}`,
+          body: JSON.stringify({ sender: currentUser, roomId }),
+        });
+        client.publish({
+          destination: `/app/typing/${roomId}`,
+          body: JSON.stringify({ sender: currentUser, roomId, typing: false }),
+        });
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
       if (client.active) client.deactivate();
       stompClientRef.current = null;
     };
-  }, [connected, roomId, showReconnectToast]);
+  }, [connected, roomId, showReconnectToast, currentUser]);
 
   const sendMessage = async () => {
     const client = stompClientRef.current;
@@ -100,6 +136,10 @@ const ChatPage = () => {
       client.publish({
         destination: `/app/sendMessage/${roomId}`,
         body: JSON.stringify({ sender: currentUser, content, roomId }),
+      });
+      client.publish({
+        destination: `/app/typing/${roomId}`,
+        body: JSON.stringify({ sender: currentUser, roomId, typing: false }),
       });
       setInput("");
     }
@@ -132,6 +172,12 @@ const ChatPage = () => {
       : connectionState === "ERROR"
       ? "Offline"
       : "Connecting";
+  const typingLabel =
+    typingUsers.length === 0
+      ? ""
+      : typingUsers.length === 1
+      ? `${typingUsers[0]} is typing...`
+      : `${typingUsers.length} people are typing...`;
 
   return (
     <div className="min-h-screen px-3 py-6 md:px-6">
@@ -144,6 +190,10 @@ const ChatPage = () => {
           <div className={`text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
             {statusText}
           </div>
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-xs text-slate-300">Online</span>
+            <span className="text-sm font-bold">{participants.length}</span>
+          </div>
           <div className="text-right">
             <p className="text-xs text-slate-300">User</p>
             <h1 className="font-semibold">{currentUser}</h1>
@@ -155,6 +205,23 @@ const ChatPage = () => {
             Leave
           </button>
         </header>
+
+        <div className="px-4 md:px-8 py-2 bg-white border-t border-[#efefef] border-b">
+          <div className="flex flex-wrap gap-2 items-center min-h-7">
+            {participants.map((participant) => (
+              <span
+                key={participant}
+                className={`text-xs px-3 py-1 rounded-full ${
+                  participant === currentUser
+                    ? "bg-[var(--peach-strong)] text-white"
+                    : "bg-[var(--surface-2)] text-[var(--ink)]"
+                }`}
+              >
+                {participant === currentUser ? `${participant} (You)` : participant}
+              </span>
+            ))}
+          </div>
+        </div>
 
         <main ref={chatBoxRef} className="h-[calc(100%-9rem)] overflow-auto px-4 md:px-8 py-5 bg-[var(--surface)]">
           {isLoadingMessages && (
@@ -200,7 +267,26 @@ const ChatPage = () => {
           </button>
           <input
             value={input}
-            onChange={(e) => setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+            onChange={(e) => {
+              const nextValue = e.target.value.slice(0, MAX_MESSAGE_LENGTH);
+              setInput(nextValue);
+              const client = stompClientRef.current;
+              if (client?.connected) {
+                client.publish({
+                  destination: `/app/typing/${roomId}`,
+                  body: JSON.stringify({ sender: currentUser, roomId, typing: nextValue.trim().length > 0 }),
+                });
+                if (typingTimeoutRef.current) {
+                  clearTimeout(typingTimeoutRef.current);
+                }
+                typingTimeoutRef.current = setTimeout(() => {
+                  client.publish({
+                    destination: `/app/typing/${roomId}`,
+                    body: JSON.stringify({ sender: currentUser, roomId, typing: false }),
+                  });
+                }, 1200);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !cannotSend) sendMessage();
             }}
@@ -220,6 +306,9 @@ const ChatPage = () => {
           >
             <MdSend size={18} />
           </button>
+        </div>
+        <div className="px-4 md:px-8 pb-3 text-xs text-[var(--muted)] h-6">
+          {typingLabel}
         </div>
       </div>
       <style>{`@keyframes fadeInMsg { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
