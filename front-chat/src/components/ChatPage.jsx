@@ -8,6 +8,9 @@ import toast from "react-hot-toast";
 import { baseURL } from "../config/AxiosHelper";
 import { getMessagess } from "../services/RoomService";
 import { timeAgo } from "../config/helper";
+
+const MAX_MESSAGE_LENGTH = 500;
+
 const ChatPage = () => {
   const {
     roomId,
@@ -30,6 +33,8 @@ const ChatPage = () => {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [connectionState, setConnectionState] = useState("CONNECTING");
+  const [showReconnectToast, setShowReconnectToast] = useState(true);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
 
@@ -76,6 +81,8 @@ const ChatPage = () => {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
+        setConnectionState("CONNECTED");
+        setShowReconnectToast(true);
         toast.success("Connected");
         client.subscribe(`/topic/room/${roomId}`, (message) => {
           const newMessage = JSON.parse(message.body);
@@ -83,14 +90,20 @@ const ChatPage = () => {
         });
       },
       onStompError: () => {
+        setConnectionState("ERROR");
         toast.error("WebSocket error");
       },
       onWebSocketClose: () => {
-        toast("Reconnecting...");
+        setConnectionState("RECONNECTING");
+        if (showReconnectToast) {
+          toast("Connection lost. Reconnecting...");
+          setShowReconnectToast(false);
+        }
       },
     });
 
     stompClientRef.current = client;
+    setConnectionState("CONNECTING");
     client.activate();
 
     return () => {
@@ -105,12 +118,12 @@ const ChatPage = () => {
 
   const sendMessage = async () => {
     const client = stompClientRef.current;
-    if (client?.connected && connected && input.trim()) {
-      console.log(input);
+    const content = input.trim();
+    if (client?.connected && connected && content && content.length <= MAX_MESSAGE_LENGTH) {
 
       const message = {
         sender: currentUser,
-        content: input,
+        content,
         roomId: roomId,
       };
 
@@ -134,6 +147,28 @@ const ChatPage = () => {
     navigate("/");
   }
 
+  const isConnected = connectionState === "CONNECTED";
+  const inputLength = input.trim().length;
+  const cannotSend = !isConnected || inputLength === 0 || inputLength > MAX_MESSAGE_LENGTH;
+
+  const statusBadgeClass =
+    connectionState === "CONNECTED"
+      ? "bg-green-700"
+      : connectionState === "RECONNECTING"
+      ? "bg-yellow-700"
+      : connectionState === "ERROR"
+      ? "bg-red-700"
+      : "bg-blue-700";
+
+  const statusText =
+    connectionState === "CONNECTED"
+      ? "Connected"
+      : connectionState === "RECONNECTING"
+      ? "Reconnecting"
+      : connectionState === "ERROR"
+      ? "Offline"
+      : "Connecting";
+
   return (
     <div className="">
       {/* this is a header */}
@@ -151,6 +186,9 @@ const ChatPage = () => {
             User : <span>{currentUser}</span>
           </h1>
         </div>
+        <div className={`text-xs px-3 py-1 rounded-full font-semibold ${statusBadgeClass}`}>
+          {statusText}
+        </div>
         {/* button: leave room */}
         <div>
           <button
@@ -166,6 +204,11 @@ const ChatPage = () => {
         ref={chatBoxRef}
         className="py-20 px-10   w-2/3 dark:bg-slate-600 mx-auto h-screen overflow-auto "
       >
+        {messages.length === 0 && (
+          <div className="h-full flex items-center justify-center text-gray-300">
+            No messages yet. Start the conversation.
+          </div>
+        )}
         {messages.map((message, index) => (
           <div
             key={index}
@@ -202,10 +245,10 @@ const ChatPage = () => {
           <input
             value={input}
             onChange={(e) => {
-              setInput(e.target.value);
+              setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !cannotSend) {
                 sendMessage();
               }
             }}
@@ -220,12 +263,18 @@ const ChatPage = () => {
             </button>
             <button
               onClick={sendMessage}
-              className="dark:bg-green-600 h-10 w-10  flex   justify-center items-center rounded-full"
+              disabled={cannotSend}
+              className={`h-10 w-10 flex justify-center items-center rounded-full ${
+                cannotSend ? "bg-gray-600 cursor-not-allowed" : "dark:bg-green-600"
+              }`}
             >
               <MdSend size={20} />
             </button>
           </div>
         </div>
+        <p className="text-xs text-center mt-1 text-gray-300">
+          {inputLength}/{MAX_MESSAGE_LENGTH}
+        </p>
       </div>
     </div>
   );

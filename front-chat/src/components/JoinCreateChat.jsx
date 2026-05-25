@@ -22,8 +22,19 @@ const JoinCreateChat = () => {
   }
 
   function validateForm() {
-    if (detail.roomId === "" || detail.userName === "") {
-      toast.error("Invalid Input !!");
+    const roomId = detail.roomId.trim();
+    const userName = detail.userName.trim();
+
+    if (!roomId || !userName) {
+      toast.error("Username and room ID are required");
+      return false;
+    }
+    if (roomId.length < 3 || roomId.length > 60) {
+      toast.error("Room ID must be 3 to 60 characters");
+      return false;
+    }
+    if (userName.length < 2 || userName.length > 40) {
+      toast.error("Username must be 2 to 40 characters");
       return false;
     }
     return true;
@@ -41,8 +52,8 @@ const JoinCreateChat = () => {
         setConnected(true);
         navigate("/chat");
       } catch (error) {
-        if (error.status == 400) {
-          toast.error(error.response.data);
+        if (error?.response?.status === 400) {
+          toast.error(error?.response?.data?.message || "Unable to join room");
         } else {
           toast.error("Error in joining room");
         }
@@ -70,10 +81,10 @@ const JoinCreateChat = () => {
         //forward to chat page...
       } catch (error) {
         console.log(error);
-        if (error.status == 400) {
-          toast.error("Room  already exists !!");
+        if (error?.response?.status === 400) {
+          toast.error(error?.response?.data?.message || "Room already exists");
         } else {
-          toast("Error in creating room");
+          toast.error("Error in creating room");
         }
       }
     }

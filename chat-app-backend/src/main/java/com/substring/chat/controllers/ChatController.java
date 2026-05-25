@@ -3,6 +3,7 @@ package com.substring.chat.controllers;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.playload.MessageRequest;
+import jakarta.validation.Valid;
 import com.substring.chat.repositories.RoomRepository;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -30,10 +31,13 @@ public class ChatController {
     @SendTo("/topic/room/{roomId}")//subscribe
     public Message sendMessage(
             @DestinationVariable String roomId,
-            @RequestBody MessageRequest request
+            @Valid @RequestBody MessageRequest request
     ) {
 
         Room room = roomRepository.findByRoomId(request.getRoomId());
+        if (!roomId.equals(request.getRoomId())) {
+            throw new IllegalArgumentException("Room id mismatch in request");
+        }
         Message message = new Message();
         message.setContent(request.getContent());
         message.setSender(request.getSender());

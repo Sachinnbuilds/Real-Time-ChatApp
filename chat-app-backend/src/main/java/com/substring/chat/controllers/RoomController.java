@@ -3,16 +3,11 @@ package com.substring.chat.controllers;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.repositories.RoomRepository;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -29,19 +24,22 @@ public class RoomController {
     //create room
     @PostMapping
     public ResponseEntity<?> createRoom(@RequestBody String roomId) {
+        String normalizedRoomId = roomId == null ? "" : roomId.trim();
+        if (normalizedRoomId.length() < 3 || normalizedRoomId.length() > 60) {
+            throw new IllegalArgumentException("Room id must be between 3 and 60 characters");
+        }
 
-        if (roomRepository.findByRoomId(roomId) != null) {
+        if (roomRepository.findByRoomId(normalizedRoomId) != null) {
             //room is already there
-            return ResponseEntity.badRequest().body("Room already exists!");
-
+            throw new IllegalArgumentException("Room already exists!");
         }
 
 
         //create new room
         Room room = new Room();
-        room.setRoomId(roomId);
+        room.setRoomId(normalizedRoomId);
         Room savedRoom = roomRepository.save(room);
-        return ResponseEntity.status(HttpStatus.CREATED).body(room);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedRoom);
 
 
     }
@@ -55,8 +53,7 @@ public class RoomController {
 
         Room room = roomRepository.findByRoomId(roomId);
         if (room == null) {
-            return ResponseEntity.badRequest()
-                    .body("Room not found!!");
+            throw new IllegalArgumentException("Room not found");
         }
         return ResponseEntity.ok(room);
     }
