@@ -11,6 +11,7 @@ const JoinCreateChat = () => {
     userName: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingAction, setLoadingAction] = useState("");
 
   const { setRoomId, setCurrentUser, setConnected } = useChatContext();
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const JoinCreateChat = () => {
 
   async function joinChat() {
     if (!validateForm()) return;
+    setLoadingAction("Joining room...");
     setIsSubmitting(true);
     try {
       const room = await joinChatApi(detail.roomId.trim());
@@ -59,11 +61,13 @@ const JoinCreateChat = () => {
       }
     } finally {
       setIsSubmitting(false);
+      setLoadingAction("");
     }
   }
 
   async function createRoom() {
     if (!validateForm()) return;
+    setLoadingAction("Creating room...");
     setIsSubmitting(true);
     try {
       const response = await createRoomApi(detail.roomId.trim());
@@ -80,11 +84,12 @@ const JoinCreateChat = () => {
       }
     } finally {
       setIsSubmitting(false);
+      setLoadingAction("");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10 relative">
       <div className="w-full max-w-md bg-[var(--surface)] rounded-[2rem] p-8 shadow-[0_18px_50px_rgba(35,35,35,0.22)] animate-[fadeIn_.25s_ease]">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -132,17 +137,25 @@ const JoinCreateChat = () => {
             onClick={joinChat}
             className="py-3 rounded-2xl font-bold text-[var(--ink)] bg-white hover:bg-[#f4f4f4] disabled:opacity-60"
           >
-            Join
+            {isSubmitting && loadingAction.startsWith("Joining") ? "Joining..." : "Join"}
           </button>
           <button
             disabled={isSubmitting}
             onClick={createRoom}
             className="py-3 rounded-2xl font-bold text-white bg-[var(--ink)] hover:bg-[var(--ink-soft)] disabled:opacity-60"
           >
-            {isSubmitting ? "Please wait..." : "Create"}
+            {isSubmitting && loadingAction.startsWith("Creating") ? "Creating..." : "Create"}
           </button>
         </div>
       </div>
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-5 py-4 shadow-lg flex items-center gap-3">
+            <span className="h-5 w-5 rounded-full border-2 border-[var(--peach)] border-t-transparent animate-spin" />
+            <p className="text-sm font-semibold text-[var(--ink)]">{loadingAction}</p>
+          </div>
+        </div>
+      )}
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
