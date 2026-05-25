@@ -228,8 +228,8 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-4 md:py-6">
-      <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
+    <div className="min-h-[100svh] h-[100svh] px-0 py-0 bg-[var(--surface)] md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6">
+      <div className="mx-auto max-w-5xl h-[100svh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
         <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-4 border-b border-white/10">
           <div className="flex items-start md:items-center justify-between gap-3">
             <div className="min-w-0">
@@ -253,12 +253,6 @@ const ChatPage = () => {
             </div>
           </div>
 
-          <div className="mt-2">
-            <div className="inline-flex min-w-0 max-w-full rounded-lg bg-white/8 border border-white/10 px-3 py-1.5 items-center gap-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 shrink-0">User</p>
-              <h2 className="font-semibold text-sm md:text-base truncate">{currentUser}</h2>
-            </div>
-          </div>
         </header>
 
         <div className="relative px-4 md:px-8 py-2.5 bg-[#f7f6f3] border-b border-[#e9e5dd]">
