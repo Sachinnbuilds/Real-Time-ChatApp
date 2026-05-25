@@ -111,8 +111,9 @@ const JoinCreateChat = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] px-3 py-8 md:px-6 md:py-12 relative bg-[linear-gradient(135deg,#f7c9b0,#f4ae8c)] overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-[100dvh] px-3 md:px-6 bg-[linear-gradient(135deg,#f7c9b0,#f4ae8c)] overflow-hidden flex flex-col">
+      <div className="flex-1 flex items-center justify-center py-6 md:py-8">
+      <div className="w-full max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] shadow-[0_24px_70px_rgba(60,30,10,0.25)] animate-[fadeIn_.25s_ease] bg-white">
           <div className="bg-white p-6 md:p-10 lg:p-12">
             <div className="mb-6">
@@ -189,9 +190,9 @@ const JoinCreateChat = () => {
           </section>
         </div>
       </div>
+      </div>
 
-      <footer className="mt-4 flex justify-center">
-        <div className="inline-flex w-fit max-w-[95vw] bg-white/90 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)] text-xs md:text-sm text-[var(--ink)] flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
+      <footer className="py-3 md:py-4 text-xs md:text-sm text-[var(--ink)] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
           <span className="font-semibold">Sachin Ramesh</span>
           <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="mailto:sachinrc2006@gmail.com">
@@ -205,7 +206,6 @@ const JoinCreateChat = () => {
           <a className="underline" href="https://github.com/Sachinnbuilds" target="_blank" rel="noreferrer">
             GitHub
           </a>
-        </div>
       </footer>
 
       {isSubmitting && (
