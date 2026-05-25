@@ -11,7 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Controller
 @CrossOrigin("${app.frontend.url}")
@@ -37,7 +37,7 @@ public class ChatController {
         Message message = new Message();
         message.setContent(request.getContent());
         message.setSender(request.getSender());
-        message.setTimeStamp(LocalDateTime.now());
+        message.setTimeStamp(Instant.now());
         if (room != null) {
             room.getMessages().add(message);
             roomRepository.save(room);
