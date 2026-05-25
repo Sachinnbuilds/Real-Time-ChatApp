@@ -216,30 +216,31 @@ const ChatPage = () => {
   return (
     <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-3 md:py-6">
       <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-none md:shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="bg-[var(--ink)] text-white px-4 py-3 md:px-8 md:py-4">
-          <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
-            <div>
-              <p className="text-xs text-slate-300">Room</p>
-              <h1 className="font-bold text-base md:text-lg break-all">{roomId}</h1>
+        <header className="bg-[var(--ink)] text-white px-4 py-4 md:px-8 md:py-5 border-b border-white/10">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Room</p>
+              <h1 className="font-extrabold text-lg md:text-2xl leading-tight truncate">{roomId}</h1>
             </div>
             <div className={`text-[11px] md:text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
               {statusText}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs text-slate-300">User</p>
-              <h1 className="font-semibold text-sm md:text-base truncate">{currentUser}</h1>
+
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-[1fr_auto_auto] gap-3 items-center">
+            <div className="min-w-0 rounded-xl bg-white/5 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">User</p>
+              <h2 className="font-semibold text-sm md:text-base truncate">{currentUser}</h2>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-white/5 px-3 py-2 flex items-center justify-between md:justify-center gap-2">
               <span className="text-xs text-slate-300">Online</span>
-              <span className="text-sm font-bold">{onlineCount}</span>
+              <span className="text-base font-extrabold">{onlineCount}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="bg-white text-[var(--ink)] rounded-full px-3 py-2 md:px-4 text-xs md:text-sm font-bold hover:bg-[#f3f3f3]"
+              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3]"
             >
-              Leave
+              Leave Room
             </button>
           </div>
         </header>
