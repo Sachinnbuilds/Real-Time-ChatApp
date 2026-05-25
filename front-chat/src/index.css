@@ -5,6 +5,7 @@
 @tailwind utilities;
 
 :root {
+  --chat-mobile-vh: 100dvh;
   --peach: #f2926b;
   --peach-strong: #ec7b4f;
   --ink: #25272d;

@@ -35,6 +35,49 @@ const ChatPage = () => {
   }, [connected, navigate]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const isMobileViewport = () => window.matchMedia("(max-width: 767px)").matches;
+    const setMobileViewportHeight = () => {
+      if (!isMobileViewport()) {
+        document.documentElement.style.removeProperty("--chat-mobile-vh");
+        return;
+      }
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty("--chat-mobile-vh", `${Math.round(viewportHeight)}px`);
+    };
+
+    setMobileViewportHeight();
+
+    const visualViewport = window.visualViewport;
+    window.addEventListener("resize", setMobileViewportHeight);
+    window.addEventListener("orientationchange", setMobileViewportHeight);
+    visualViewport?.addEventListener("resize", setMobileViewportHeight);
+
+    return () => {
+      window.removeEventListener("resize", setMobileViewportHeight);
+      window.removeEventListener("orientationchange", setMobileViewportHeight);
+      visualViewport?.removeEventListener("resize", setMobileViewportHeight);
+      document.documentElement.style.removeProperty("--chat-mobile-vh");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    if (!window.matchMedia("(max-width: 767px)").matches) return undefined;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, []);
+
+  useEffect(() => {
     async function loadMessages() {
       setIsLoadingMessages(true);
       try {
@@ -228,8 +271,8 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-[100svh] h-[100svh] px-0 py-0 bg-[var(--surface)] md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6">
-      <div className="mx-auto max-w-5xl h-[100svh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
+    <div className="min-h-[var(--chat-mobile-vh)] h-[var(--chat-mobile-vh)] px-0 py-0 bg-[var(--surface)] md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6 overflow-hidden">
+      <div className="mx-auto max-w-5xl h-[var(--chat-mobile-vh)] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
         <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-4 border-b border-white/10">
           <div className="flex items-start md:items-center justify-between gap-3">
             <div className="min-w-0">
