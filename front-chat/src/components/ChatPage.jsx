@@ -3,7 +3,7 @@ import { MdAttachFile, MdSend } from "react-icons/md";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
 import SockJS from "sockjs-client";
-import { Stomp } from "@stomp/stompjs";
+import { Client } from "@stomp/stompjs";
 import toast from "react-hot-toast";
 import { baseURL } from "../config/AxiosHelper";
 import { getMessagess } from "../services/RoomService";
@@ -70,7 +70,7 @@ const ChatPage = () => {
       return undefined;
     }
 
-    const client = new Stomp.Client({
+    const client = new Client({
       webSocketFactory: () => new SockJS(`${baseURL}/chat`),
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
