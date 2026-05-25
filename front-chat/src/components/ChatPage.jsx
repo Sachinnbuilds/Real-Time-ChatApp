@@ -228,56 +228,60 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-3 md:py-6">
-      <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-none md:shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="bg-[var(--ink)] text-white px-4 py-2.5 md:px-8 md:py-5 border-b border-white/10">
-          <div className="flex items-start justify-between gap-3">
+    <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-4 md:py-6">
+      <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
+        <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-6 border-b border-white/10">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Room</p>
-              <h1 className="font-extrabold text-lg md:text-2xl leading-tight truncate">{roomId}</h1>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Room</p>
+              <h1 className="font-extrabold text-xl md:text-[2rem] leading-tight truncate">{roomId}</h1>
             </div>
-            <div className={`text-[11px] md:text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
+            <div className={`text-[11px] md:text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}>
               {statusText}
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-[1fr_auto_auto] gap-2 md:gap-3 items-center">
-            <div className="min-w-0 rounded-xl bg-white/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">User</p>
-              <h2 className="font-semibold text-sm md:text-base truncate">{currentUser}</h2>
+          <div className="mt-3.5 grid grid-cols-2 md:grid-cols-[minmax(0,1fr)_auto_auto] gap-2.5 md:gap-3 items-center">
+            <div className="min-w-0 rounded-xl bg-white/8 border border-white/10 px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">User</p>
+              <h2 className="font-semibold text-sm md:text-base truncate mt-0.5">{currentUser}</h2>
             </div>
-            <div className="rounded-xl bg-white/5 px-3 py-2 flex items-center justify-between md:justify-center gap-2">
+            <div className="rounded-xl bg-white/8 border border-white/10 px-3.5 py-2.5 flex items-center justify-between md:justify-center gap-2">
               <span className="text-xs text-slate-300">Online</span>
-              <span className="text-base font-extrabold">{onlineCount}</span>
+              <span className="text-base font-extrabold text-[#ffd8c4]">{onlineCount}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               Leave Room
             </button>
           </div>
         </header>
 
-        <div className="relative px-4 md:px-8 py-2 bg-white border-b border-[#efefef]">
+        <div className="relative px-4 md:px-8 py-2.5 bg-[#f7f6f3] border-b border-[#e9e5dd]">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Participants</span>
+            <span className="text-[11px] font-semibold text-[var(--ink)]">{participants.length}</span>
+          </div>
           <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap pr-6">
             {participants.map((participant) => (
               <span
                 key={participant}
                 className={`text-xs px-3 py-1 rounded-full shrink-0 ${
                   participant === currentUser
-                    ? "bg-[var(--peach-strong)] text-white"
-                    : "bg-[var(--surface-2)] text-[var(--ink)]"
+                    ? "bg-[var(--peach-strong)] text-white shadow-[0_4px_12px_rgba(236,123,79,0.35)]"
+                    : "bg-white border border-[#e8e3da] text-[var(--ink)]"
                 }`}
               >
                 {participant === currentUser ? `${participant} (You)` : participant}
               </span>
             ))}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#f7f6f3] to-transparent" />
         </div>
 
-        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-3 md:px-8 py-4 md:py-5 bg-[var(--surface)]">
+        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-3 md:px-8 py-4 md:py-5 bg-transparent">
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
               <div className="h-16 w-[55%] bg-[var(--surface-2)] rounded-[1.35rem]" />
@@ -305,10 +309,10 @@ const ChatPage = () => {
                 } animate-[fadeInMsg_.2s_ease]`}
               >
                 <div
-                  className={`max-w-[82%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 ${
+                  className={`max-w-[82%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
                     message.sender === currentUser
                       ? "bg-[var(--peach-strong)] text-white"
-                      : "bg-[var(--surface-2)] text-[var(--ink)]"
+                      : "bg-white border border-[#e9e4dc] text-[var(--ink)]"
                   }`}
                 >
                   <p className="text-[11px] font-semibold opacity-80 mb-1">{message.sender}</p>
@@ -319,8 +323,8 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] bg-transparent">
-          <div className="rounded-2xl bg-white/95 supports-[backdrop-filter]:bg-white/85 backdrop-blur border border-[#ebe8e2] shadow-[0_8px_22px_rgba(30,30,30,0.08)] px-2 md:px-3 py-2 flex items-center gap-2">
+        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
+          <div className="rounded-2xl bg-white/95 supports-[backdrop-filter]:bg-white/88 backdrop-blur border border-[#ebe8e2] shadow-[0_8px_22px_rgba(30,30,30,0.08)] px-2 md:px-3 py-2 flex items-center gap-2">
             <button
               onClick={() => setShowInviteModal(true)}
               className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] shrink-0"
