@@ -12,51 +12,37 @@ import { timeAgo } from "../config/helper";
 const MAX_MESSAGE_LENGTH = 500;
 
 const ChatPage = () => {
-  const {
-    roomId,
-    currentUser,
-    connected,
-    setConnected,
-    setRoomId,
-    setCurrentUser,
-  } = useChatContext();
-  // console.log(roomId);
-  // console.log(currentUser);
-  // console.log(connected);
-
+  const { roomId, currentUser, connected, setConnected, setRoomId, setCurrentUser } = useChatContext();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (!connected) {
-      navigate("/");
-    }
-  }, [connected, roomId, currentUser]);
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [connectionState, setConnectionState] = useState("CONNECTING");
   const [showReconnectToast, setShowReconnectToast] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
 
-  //page init:
-  //messages ko load karne honge
+  useEffect(() => {
+    if (!connected) {
+      navigate("/");
+    }
+  }, [connected, navigate]);
 
   useEffect(() => {
     async function loadMessages() {
+      setIsLoadingMessages(true);
       try {
-        const messages = await getMessagess(roomId);
-        // console.log(messages);
-        setMessages(messages);
+        const response = await getMessagess(roomId);
+        setMessages(response);
       } catch (error) {
         toast.error("Failed to load messages");
+      } finally {
+        setIsLoadingMessages(false);
       }
     }
-    if (connected && roomId) {
-      loadMessages();
-    }
+    if (connected && roomId) loadMessages();
   }, [connected, roomId]);
-
-  //scroll down
 
   useEffect(() => {
     if (chatBoxRef.current) {
@@ -67,13 +53,8 @@ const ChatPage = () => {
     }
   }, [messages]);
 
-  //stompClient ko init karne honge
-  //subscribe
-
   useEffect(() => {
-    if (!connected || !roomId) {
-      return undefined;
-    }
+    if (!connected || !roomId) return undefined;
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${baseURL}/chat`),
@@ -107,40 +88,25 @@ const ChatPage = () => {
     client.activate();
 
     return () => {
-      if (client.active) {
-        client.deactivate();
-      }
+      if (client.active) client.deactivate();
       stompClientRef.current = null;
     };
-  }, [connected, roomId]);
-
-  //send message handle
+  }, [connected, roomId, showReconnectToast]);
 
   const sendMessage = async () => {
     const client = stompClientRef.current;
     const content = input.trim();
     if (client?.connected && connected && content && content.length <= MAX_MESSAGE_LENGTH) {
-
-      const message = {
-        sender: currentUser,
-        content,
-        roomId: roomId,
-      };
-
       client.publish({
         destination: `/app/sendMessage/${roomId}`,
-        body: JSON.stringify(message),
+        body: JSON.stringify({ sender: currentUser, content, roomId }),
       });
       setInput("");
     }
-
-    //
   };
 
   function handleLogout() {
-    if (stompClientRef.current?.active) {
-      stompClientRef.current.deactivate();
-    }
+    if (stompClientRef.current?.active) stompClientRef.current.deactivate();
     setConnected(false);
     setRoomId("");
     setCurrentUser("");
@@ -150,16 +116,14 @@ const ChatPage = () => {
   const isConnected = connectionState === "CONNECTED";
   const inputLength = input.trim().length;
   const cannotSend = !isConnected || inputLength === 0 || inputLength > MAX_MESSAGE_LENGTH;
-
   const statusBadgeClass =
     connectionState === "CONNECTED"
-      ? "bg-green-700"
+      ? "bg-emerald-500"
       : connectionState === "RECONNECTING"
-      ? "bg-yellow-700"
+      ? "bg-amber-500"
       : connectionState === "ERROR"
-      ? "bg-red-700"
-      : "bg-blue-700";
-
+      ? "bg-rose-500"
+      : "bg-sky-500";
   const statusText =
     connectionState === "CONNECTED"
       ? "Connected"
@@ -170,112 +134,95 @@ const ChatPage = () => {
       : "Connecting";
 
   return (
-    <div className="">
-      {/* this is a header */}
-      <header className="dark:border-gray-700  fixed w-full dark:bg-gray-900 py-5 shadow flex justify-around items-center">
-        {/* room name container */}
-        <div>
-          <h1 className="text-xl font-semibold">
-            Room : <span>{roomId}</span>
-          </h1>
-        </div>
-        {/* username container */}
-
-        <div>
-          <h1 className="text-xl font-semibold">
-            User : <span>{currentUser}</span>
-          </h1>
-        </div>
-        <div className={`text-xs px-3 py-1 rounded-full font-semibold ${statusBadgeClass}`}>
-          {statusText}
-        </div>
-        {/* button: leave room */}
-        <div>
+    <div className="min-h-screen px-3 py-6 md:px-6">
+      <div className="mx-auto max-w-5xl h-[92vh] rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-[0_20px_60px_rgba(30,30,30,0.25)]">
+        <header className="h-20 bg-[var(--ink)] text-white px-5 md:px-8 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-slate-300">Room</p>
+            <h1 className="font-bold text-lg">{roomId}</h1>
+          </div>
+          <div className={`text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
+            {statusText}
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-slate-300">User</p>
+            <h1 className="font-semibold">{currentUser}</h1>
+          </div>
           <button
             onClick={handleLogout}
-            className="dark:bg-red-500 dark:hover:bg-red-700 px-3 py-2 rounded-full"
+            className="ml-4 bg-white text-[var(--ink)] rounded-full px-4 py-2 text-sm font-bold hover:bg-[#f3f3f3]"
           >
-            Leave Room
+            Leave
           </button>
-        </div>
-      </header>
+        </header>
 
-      <main
-        ref={chatBoxRef}
-        className="py-20 px-10   w-2/3 dark:bg-slate-600 mx-auto h-screen overflow-auto "
-      >
-        {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center text-gray-300">
-            No messages yet. Start the conversation.
-          </div>
-        )}
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${
-              message.sender === currentUser ? "justify-end" : "justify-start"
-            } `}
-          >
-            <div
-              className={`my-2 ${
-                message.sender === currentUser ? "bg-green-800" : "bg-gray-800"
-              } p-2 max-w-xs rounded`}
-            >
-              <div className="flex flex-row gap-2">
-                <img
-                  className="h-10 w-10"
-                  src={"https://avatar.iran.liara.run/public/43"}
-                  alt=""
-                />
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-bold">{message.sender}</p>
-                  <p>{message.content}</p>
-                  <p className="text-xs text-gray-400">
-                    {timeAgo(message.timeStamp)}
-                  </p>
+        <main ref={chatBoxRef} className="h-[calc(100%-9rem)] overflow-auto px-4 md:px-8 py-5 bg-[var(--surface)]">
+          {isLoadingMessages && (
+            <div className="space-y-3 animate-pulse">
+              <div className="h-14 w-1/2 bg-[var(--surface-2)] rounded-2xl" />
+              <div className="h-14 w-2/3 bg-[var(--surface-2)] rounded-2xl ml-auto" />
+              <div className="h-14 w-1/3 bg-[var(--surface-2)] rounded-2xl" />
+            </div>
+          )}
+
+          {!isLoadingMessages && messages.length === 0 && (
+            <div className="h-full flex items-center justify-center text-[var(--muted)] font-semibold">
+              No messages yet. Start the conversation.
+            </div>
+          )}
+
+          {!isLoadingMessages &&
+            messages.map((message, index) => (
+              <div
+                key={index}
+                className={`mb-3 flex ${
+                  message.sender === currentUser ? "justify-end" : "justify-start"
+                } animate-[fadeInMsg_.2s_ease]`}
+              >
+                <div
+                  className={`max-w-xs md:max-w-md rounded-[1.35rem] px-4 py-3 ${
+                    message.sender === currentUser
+                      ? "bg-[var(--peach-strong)] text-white"
+                      : "bg-[var(--surface-2)] text-[var(--ink)]"
+                  }`}
+                >
+                  <p className="text-xs font-bold opacity-80 mb-1">{message.sender}</p>
+                  <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                  <p className="text-[11px] opacity-70 mt-1">{timeAgo(message.timeStamp)}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </main>
-      {/* input message container */}
-      <div className=" fixed bottom-4 w-full h-16 ">
-        <div className="h-full  pr-10 gap-4 flex items-center justify-between rounded-full w-1/2 mx-auto dark:bg-gray-900">
+            ))}
+        </main>
+
+        <div className="h-16 px-4 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2">
+          <button className="h-10 w-10 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center">
+            <MdAttachFile size={18} />
+          </button>
           <input
             value={input}
-            onChange={(e) => {
-              setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
-            }}
+            onChange={(e) => setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !cannotSend) {
-                sendMessage();
-              }
+              if (e.key === "Enter" && !cannotSend) sendMessage();
             }}
             type="text"
-            placeholder="Type your message here..."
-            className=" w-full  dark:border-gray-600 b dark:bg-gray-800  px-5 py-2 rounded-full h-full focus:outline-none  "
+            placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
+            className="flex-1 bg-[var(--surface)] text-[var(--ink)] rounded-full px-5 py-2 focus:outline-none"
           />
-
-          <div className="flex gap-1">
-            <button className="dark:bg-purple-600 h-10 w-10  flex   justify-center items-center rounded-full">
-              <MdAttachFile size={20} />
-            </button>
-            <button
-              onClick={sendMessage}
-              disabled={cannotSend}
-              className={`h-10 w-10 flex justify-center items-center rounded-full ${
-                cannotSend ? "bg-gray-600 cursor-not-allowed" : "dark:bg-green-600"
-              }`}
-            >
-              <MdSend size={20} />
-            </button>
+          <div className="text-[11px] text-[var(--muted)] w-14 text-right">
+            {inputLength}/{MAX_MESSAGE_LENGTH}
           </div>
+          <button
+            onClick={sendMessage}
+            disabled={cannotSend}
+            className={`h-10 w-10 rounded-full flex items-center justify-center ${
+              cannotSend ? "bg-[#ddd] text-[#999]" : "bg-[var(--peach-strong)] text-white"
+            }`}
+          >
+            <MdSend size={18} />
+          </button>
         </div>
-        <p className="text-xs text-center mt-1 text-gray-300">
-          {inputLength}/{MAX_MESSAGE_LENGTH}
-        </p>
       </div>
+      <style>{`@keyframes fadeInMsg { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 };
