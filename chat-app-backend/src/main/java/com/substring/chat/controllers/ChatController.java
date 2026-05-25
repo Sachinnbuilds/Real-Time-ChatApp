@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class ChatController {
 
     private final RoomRepository roomRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final Map<String, Set<String>> roomParticipants = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, String>> roomParticipantsBySession = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
 
@@ -80,11 +81,14 @@ public class ChatController {
             return;
         }
         String sessionId = headerAccessor.getSessionId();
-        if (sessionId != null && !sessionId.isBlank()) {
-            sessionToRoom.put(sessionId, roomId);
-            sessionToUser.put(sessionId, sender);
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
         }
-        roomParticipants.computeIfAbsent(roomId, key -> ConcurrentHashMap.newKeySet()).add(sender);
+        sessionToRoom.put(sessionId, roomId);
+        sessionToUser.put(sessionId, sender);
+        roomParticipantsBySession
+                .computeIfAbsent(roomId, key -> new ConcurrentHashMap<>())
+                .put(sessionId, sender);
         broadcastPresence(roomId);
     }
 
@@ -103,12 +107,12 @@ public class ChatController {
         if (sessionId != null && !sessionId.isBlank()) {
             sessionToRoom.remove(sessionId);
             sessionToUser.remove(sessionId);
-        }
-        Set<String> participants = roomParticipants.get(roomId);
-        if (participants != null) {
-            participants.remove(sender);
-            if (participants.isEmpty()) {
-                roomParticipants.remove(roomId);
+            Map<String, String> sessions = roomParticipantsBySession.get(roomId);
+            if (sessions != null) {
+                sessions.remove(sessionId);
+                if (sessions.isEmpty()) {
+                    roomParticipantsBySession.remove(roomId);
+                }
             }
         }
         broadcastPresence(roomId);
@@ -130,11 +134,13 @@ public class ChatController {
     }
 
     private void broadcastPresence(String roomId) {
-        Set<String> participants = roomParticipants.getOrDefault(roomId, Set.of());
+        Map<String, String> sessions = roomParticipantsBySession.getOrDefault(roomId, Map.of());
+        Set<String> uniqueParticipants = ConcurrentHashMap.newKeySet();
+        uniqueParticipants.addAll(sessions.values());
         Map<String, Object> presenceEvent = new HashMap<>();
         presenceEvent.put("roomId", roomId);
-        presenceEvent.put("participants", participants);
-        presenceEvent.put("count", participants.size());
+        presenceEvent.put("participants", new ArrayList<>(uniqueParticipants));
+        presenceEvent.put("count", sessions.size());
         messagingTemplate.convertAndSend("/topic/room/" + roomId + "/presence", presenceEvent);
     }
 
@@ -149,11 +155,11 @@ public class ChatController {
         if (roomId == null || sender == null) {
             return;
         }
-        Set<String> participants = roomParticipants.get(roomId);
-        if (participants != null) {
-            participants.remove(sender);
-            if (participants.isEmpty()) {
-                roomParticipants.remove(roomId);
+        Map<String, String> sessions = roomParticipantsBySession.get(roomId);
+        if (sessions != null) {
+            sessions.remove(sessionId);
+            if (sessions.isEmpty()) {
+                roomParticipantsBySession.remove(roomId);
             }
         }
         broadcastPresence(roomId);

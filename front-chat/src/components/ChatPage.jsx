@@ -21,6 +21,7 @@ const ChatPage = () => {
   const [showReconnectToast, setShowReconnectToast] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [participants, setParticipants] = useState([]);
+  const [onlineCount, setOnlineCount] = useState(0);
   const [typingUsers, setTypingUsers] = useState([]);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
@@ -75,6 +76,7 @@ const ChatPage = () => {
         client.subscribe(`/topic/room/${roomId}/presence`, (message) => {
           const payload = JSON.parse(message.body);
           setParticipants(Array.isArray(payload.participants) ? payload.participants : []);
+          setOnlineCount(Number.isFinite(payload.count) ? payload.count : 0);
         });
         client.subscribe(`/topic/room/${roomId}/typing`, (message) => {
           const payload = JSON.parse(message.body);
@@ -192,7 +194,7 @@ const ChatPage = () => {
           </div>
           <div className="hidden md:flex items-center gap-2">
             <span className="text-xs text-slate-300">Online</span>
-            <span className="text-sm font-bold">{participants.length}</span>
+            <span className="text-sm font-bold">{onlineCount}</span>
           </div>
           <div className="text-right">
             <p className="text-xs text-slate-300">User</p>
