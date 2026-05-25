@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import chatIcon from "../assets/chat.png";
 import toast from "react-hot-toast";
 import { createRoomApi, joinChatApi } from "../services/RoomService";
 import useChatContext from "../context/ChatContext";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 
 const JoinCreateChat = () => {
   const [detail, setDetail] = useState({
@@ -15,6 +15,17 @@ const JoinCreateChat = () => {
 
   const { setRoomId, setCurrentUser, setConnected } = useChatContext();
   const navigate = useNavigate();
+  const { roomId: inviteRoomId } = useParams();
+  const [searchParams] = useSearchParams();
+  const inviterName = searchParams.get("inviter")?.trim() || "";
+
+  useEffect(() => {
+    if (!inviteRoomId) return;
+    setDetail((prev) => ({
+      ...prev,
+      roomId: inviteRoomId,
+    }));
+  }, [inviteRoomId]);
 
   function handleFormInputChange(event) {
     setDetail({
@@ -98,6 +109,11 @@ const JoinCreateChat = () => {
           </div>
           <img src={chatIcon} className="w-14 h-14 rounded-2xl object-cover" alt="Chat app" />
         </div>
+        {inviterName && (
+          <div className="mb-4 rounded-xl bg-[var(--surface-2)] px-4 py-2 text-sm text-[var(--ink)]">
+            Invited by <span className="font-bold">{inviterName}</span>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div>

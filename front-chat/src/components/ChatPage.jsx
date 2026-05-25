@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MdAttachFile, MdSend } from "react-icons/md";
+import { MdClose, MdContentCopy, MdSend, MdShare } from "react-icons/md";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
 import SockJS from "sockjs-client";
@@ -23,6 +23,7 @@ const ChatPage = () => {
   const [participants, setParticipants] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -180,6 +181,37 @@ const ChatPage = () => {
       : typingUsers.length === 1
       ? `${typingUsers[0]} is typing...`
       : `${typingUsers.length} people are typing...`;
+  const inviteUrl = `${window.location.origin}/join/${encodeURIComponent(roomId)}?inviter=${encodeURIComponent(
+    currentUser
+  )}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(inviteUrl)}`;
+
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Could not copy invite link");
+    }
+  };
+
+  const shareInviteLink = async () => {
+    if (!navigator.share) {
+      toast("Share is not supported on this device");
+      return;
+    }
+    try {
+      await navigator.share({
+        title: `Join room ${roomId}`,
+        text: `${currentUser} invited you to join chat room ${roomId}`,
+        url: inviteUrl,
+      });
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        toast.error("Unable to share invite");
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen px-3 py-6 md:px-6">
@@ -264,8 +296,11 @@ const ChatPage = () => {
         </main>
 
         <div className="h-16 px-4 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2">
-          <button className="h-10 w-10 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center">
-            <MdAttachFile size={18} />
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="h-10 px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-sm font-semibold hover:bg-[#e8e7e5]"
+          >
+            Invite
           </button>
           <input
             value={input}
@@ -313,6 +348,50 @@ const ChatPage = () => {
           {typingLabel}
         </div>
       </div>
+      {showInviteModal && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-[var(--ink)]">Invite To Room</h2>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="h-9 w-9 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center"
+              >
+                <MdClose size={20} />
+              </button>
+            </div>
+
+            <p className="text-sm text-[var(--muted)] mt-2">
+              Share this invite to let others join room <span className="font-semibold">{roomId}</span>.
+            </p>
+
+            <div className="mt-5 flex justify-center">
+              <img src={qrUrl} alt={`Invite QR for room ${roomId}`} className="w-56 h-56 rounded-2xl border" />
+            </div>
+
+            <div className="mt-4 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink)] break-all">
+              {inviteUrl}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                onClick={copyInviteLink}
+                className="h-11 rounded-xl bg-[var(--ink)] text-white font-semibold flex items-center justify-center gap-2"
+              >
+                <MdContentCopy size={18} />
+                Copy Link
+              </button>
+              <button
+                onClick={shareInviteLink}
+                className="h-11 rounded-xl bg-[var(--surface-2)] text-[var(--ink)] font-semibold flex items-center justify-center gap-2"
+              >
+                <MdShare size={18} />
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`@keyframes fadeInMsg { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
