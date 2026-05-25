@@ -5,6 +5,7 @@ import com.substring.chat.entities.Room;
 import com.substring.chat.playload.MessageRequest;
 import jakarta.validation.Valid;
 import com.substring.chat.repositories.RoomRepository;
+import com.substring.chat.service.PresenceTracker;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,23 +23,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 @CrossOrigin("${app.frontend.url}")
 public class ChatController {
 
-    private static final int MAX_ACTIVE_ROOM_MEMBERS = 5;
-
     private final RoomRepository roomRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final Map<String, Map<String, String>> roomParticipantsBySession = new ConcurrentHashMap<>();
-    private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
-    private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
+    private final PresenceTracker presenceTracker;
 
-    public ChatController(RoomRepository roomRepository, SimpMessagingTemplate messagingTemplate) {
+    public ChatController(
+            RoomRepository roomRepository,
+            SimpMessagingTemplate messagingTemplate,
+            PresenceTracker presenceTracker
+    ) {
         this.roomRepository = roomRepository;
         this.messagingTemplate = messagingTemplate;
+        this.presenceTracker = presenceTracker;
     }
 
 
@@ -90,17 +91,11 @@ public class ChatController {
             sendSystemEventToSession(sessionId, "ROOM_CLOSED", "Room is closed. Create or join another room.");
             return;
         }
-        Map<String, String> sessionsInRoom = roomParticipantsBySession.getOrDefault(roomId, Map.of());
-        boolean alreadyInRoom = sessionsInRoom.containsKey(sessionId);
-        if (!alreadyInRoom && sessionsInRoom.size() >= MAX_ACTIVE_ROOM_MEMBERS) {
+        if (!presenceTracker.canJoinRoom(roomId, sessionId)) {
             sendSystemEventToSession(sessionId, "ROOM_FULL", "Room is full (max 5 people). Try another room.");
             return;
         }
-        sessionToRoom.put(sessionId, roomId);
-        sessionToUser.put(sessionId, sender);
-        roomParticipantsBySession
-                .computeIfAbsent(roomId, key -> new ConcurrentHashMap<>())
-                .put(sessionId, sender);
+        presenceTracker.addSession(roomId, sessionId, sender);
         broadcastPresence(roomId);
     }
 
@@ -117,15 +112,10 @@ public class ChatController {
         }
         String sessionId = headerAccessor.getSessionId();
         if (sessionId != null && !sessionId.isBlank()) {
-            sessionToRoom.remove(sessionId);
-            sessionToUser.remove(sessionId);
-            Map<String, String> sessions = roomParticipantsBySession.get(roomId);
-            if (sessions != null) {
-                sessions.remove(sessionId);
-                if (sessions.isEmpty()) {
-                    roomParticipantsBySession.remove(roomId);
-                }
-            }
+            presenceTracker.removeSession(sessionId);
+        }
+        if (presenceTracker.isRoomEmpty(roomId)) {
+            clearRoomData(roomId);
         }
         broadcastPresence(roomId);
     }
@@ -146,9 +136,7 @@ public class ChatController {
     }
 
     private void broadcastPresence(String roomId) {
-        Map<String, String> sessions = roomParticipantsBySession.getOrDefault(roomId, Map.of());
-        Set<String> uniqueParticipants = ConcurrentHashMap.newKeySet();
-        uniqueParticipants.addAll(sessions.values());
+        Set<String> uniqueParticipants = presenceTracker.getUniqueParticipants(roomId);
         Map<String, Object> presenceEvent = new HashMap<>();
         presenceEvent.put("roomId", roomId);
         presenceEvent.put("participants", new ArrayList<>(uniqueParticipants));
@@ -162,18 +150,12 @@ public class ChatController {
         if (sessionId == null || sessionId.isBlank()) {
             return;
         }
-        String roomId = sessionToRoom.remove(sessionId);
-        String sender = sessionToUser.remove(sessionId);
-        if (roomId == null || sender == null) {
+        String roomId = presenceTracker.removeSession(sessionId);
+        if (roomId == null) {
             return;
         }
-        Map<String, String> sessions = roomParticipantsBySession.get(roomId);
-        if (sessions != null) {
-            sessions.remove(sessionId);
-            if (sessions.isEmpty()) {
-                roomParticipantsBySession.remove(roomId);
-                clearRoomData(roomId);
-            }
+        if (presenceTracker.isRoomEmpty(roomId)) {
+            clearRoomData(roomId);
         }
         broadcastPresence(roomId);
     }

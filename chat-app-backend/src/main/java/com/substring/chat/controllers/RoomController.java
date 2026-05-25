@@ -3,6 +3,7 @@ package com.substring.chat.controllers;
 import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.repositories.RoomRepository;
+import com.substring.chat.service.PresenceTracker;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +16,12 @@ import java.util.List;
 public class RoomController {
 
     private RoomRepository roomRepository;
+    private PresenceTracker presenceTracker;
 
 
-    public RoomController(RoomRepository roomRepository) {
+    public RoomController(RoomRepository roomRepository, PresenceTracker presenceTracker) {
         this.roomRepository = roomRepository;
+        this.presenceTracker = presenceTracker;
     }
 
     //create room
@@ -54,6 +57,9 @@ public class RoomController {
         Room room = roomRepository.findByRoomId(roomId);
         if (room == null) {
             throw new IllegalArgumentException("Room not found");
+        }
+        if (presenceTracker.getActiveSessionCount(roomId) >= PresenceTracker.MAX_ACTIVE_ROOM_MEMBERS) {
+            throw new IllegalArgumentException("Room is full (max 5 people). Try another room.");
         }
         return ResponseEntity.ok(room);
     }
