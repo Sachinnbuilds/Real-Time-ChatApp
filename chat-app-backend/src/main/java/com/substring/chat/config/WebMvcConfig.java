@@ -1,34 +1,33 @@
 package com.substring.chat.config;
 
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
-
-import java.util.Arrays;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 @Configuration
-public class WebMvcConfig {
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
-        config.setAllowCredentials(true);
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
+    }
 
-        // Explicitly include all your Vercel preview and production domains
-        config.setAllowedOrigins(Arrays.asList(
-                "https://real-time-chat-app-sigma-two.vercel.app",
-                "https://real-time-chat-app-git-main-sachin-rameshs-projects.vercel.app"
-        ));
-
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Apply this configuration globally to every single route
-        source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/chat") // connection establishment
+                .setAllowedOrigins(
+                        "https://real-time-chat-app-sigma-two.vercel.app",
+                        "https://real-time-chat-app-git-main-sachin-rameshs-projects.vercel.app",
+                        frontendUrl
+                )
+                .withSockJS();
     }
 }
