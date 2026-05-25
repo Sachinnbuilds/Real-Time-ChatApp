@@ -214,38 +214,42 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen px-3 py-6 md:px-6">
-      <div className="mx-auto max-w-5xl h-[92vh] rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="h-20 bg-[var(--ink)] text-white px-5 md:px-8 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-slate-300">Room</p>
-            <h1 className="font-bold text-lg">{roomId}</h1>
+    <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-3 md:py-6">
+      <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-none md:shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
+        <header className="bg-[var(--ink)] text-white px-4 py-3 md:px-8 md:py-4">
+          <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+            <div>
+              <p className="text-xs text-slate-300">Room</p>
+              <h1 className="font-bold text-base md:text-lg break-all">{roomId}</h1>
+            </div>
+            <div className={`text-[11px] md:text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
+              {statusText}
+            </div>
           </div>
-          <div className={`text-xs font-bold px-3 py-1 rounded-full text-white ${statusBadgeClass}`}>
-            {statusText}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-slate-300">User</p>
+              <h1 className="font-semibold text-sm md:text-base truncate">{currentUser}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-300">Online</span>
+              <span className="text-sm font-bold">{onlineCount}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-white text-[var(--ink)] rounded-full px-3 py-2 md:px-4 text-xs md:text-sm font-bold hover:bg-[#f3f3f3]"
+            >
+              Leave
+            </button>
           </div>
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-xs text-slate-300">Online</span>
-            <span className="text-sm font-bold">{onlineCount}</span>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-300">User</p>
-            <h1 className="font-semibold">{currentUser}</h1>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="ml-4 bg-white text-[var(--ink)] rounded-full px-4 py-2 text-sm font-bold hover:bg-[#f3f3f3]"
-          >
-            Leave
-          </button>
         </header>
 
-        <div className="px-4 md:px-8 py-2 bg-white border-t border-[#efefef] border-b">
-          <div className="flex flex-wrap gap-2 items-center min-h-7">
+        <div className="px-4 md:px-8 py-2 bg-white border-b border-[#efefef]">
+          <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap">
             {participants.map((participant) => (
               <span
                 key={participant}
-                className={`text-xs px-3 py-1 rounded-full ${
+                className={`text-xs px-3 py-1 rounded-full shrink-0 ${
                   participant === currentUser
                     ? "bg-[var(--peach-strong)] text-white"
                     : "bg-[var(--surface-2)] text-[var(--ink)]"
@@ -295,10 +299,10 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="h-16 px-4 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2">
+        <div className="h-16 px-3 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2">
           <button
             onClick={() => setShowInviteModal(true)}
-            className="h-10 px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-sm font-semibold hover:bg-[#e8e7e5]"
+            className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] shrink-0"
           >
             Invite
           </button>
@@ -329,28 +333,28 @@ const ChatPage = () => {
             }}
             type="text"
             placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
-            className="flex-1 bg-[var(--surface)] text-[var(--ink)] rounded-full px-5 py-2 focus:outline-none"
+            className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none text-sm"
           />
-          <div className="text-[11px] text-[var(--muted)] w-14 text-right">
+          <div className="hidden sm:block text-[11px] text-[var(--muted)] w-14 text-right shrink-0">
             {inputLength}/{MAX_MESSAGE_LENGTH}
           </div>
           <button
             onClick={sendMessage}
             disabled={cannotSend}
-            className={`h-10 w-10 rounded-full flex items-center justify-center ${
+            className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
               cannotSend ? "bg-[#ddd] text-[#999]" : "bg-[var(--peach-strong)] text-white"
             }`}
           >
             <MdSend size={18} />
           </button>
         </div>
-        <div className="px-4 md:px-8 pb-3 text-xs text-[var(--muted)] h-6">
+        <div className="px-3 md:px-8 pb-3 text-xs text-[var(--muted)] h-6 truncate">
           {typingLabel}
         </div>
       </div>
       {showInviteModal && (
-        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center px-4">
-          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-6">
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-3 md:px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-4 md:p-6 max-h-[95dvh] overflow-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-[var(--ink)]">Invite To Room</h2>
               <button
@@ -366,7 +370,7 @@ const ChatPage = () => {
             </p>
 
             <div className="mt-5 flex justify-center">
-              <img src={qrUrl} alt={`Invite QR for room ${roomId}`} className="w-56 h-56 rounded-2xl border" />
+              <img src={qrUrl} alt={`Invite QR for room ${roomId}`} className="w-44 h-44 md:w-56 md:h-56 rounded-2xl border" />
             </div>
 
             <div className="mt-4 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink)] break-all">
