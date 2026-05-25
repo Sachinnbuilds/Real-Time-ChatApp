@@ -230,32 +230,34 @@ const ChatPage = () => {
   return (
     <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-4 md:py-6">
       <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-6 border-b border-white/10">
-          <div className="flex items-center justify-between gap-3">
+        <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-4 border-b border-white/10">
+          <div className="flex items-start md:items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Room</p>
-              <h1 className="font-extrabold text-xl md:text-[2rem] leading-tight truncate">{roomId}</h1>
+              <h1 className="font-extrabold text-xl md:text-4xl leading-tight truncate">{roomId}</h1>
             </div>
-            <div className={`text-[11px] md:text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}>
-              {statusText}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className={`text-[11px] md:text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}>
+                {statusText}
+              </div>
+              <div className="rounded-lg bg-white/8 border border-white/10 px-3 py-1.5 flex items-center gap-1.5">
+                <span className="text-xs text-slate-300">Online</span>
+                <span className="text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-white text-[var(--ink)] rounded-lg px-3.5 py-1.5 text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                Leave Room
+              </button>
             </div>
           </div>
 
-          <div className="mt-3.5 grid grid-cols-2 md:grid-cols-[minmax(0,1fr)_auto_auto] gap-2.5 md:gap-3 items-center">
-            <div className="min-w-0 rounded-xl bg-white/8 border border-white/10 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400">User</p>
-              <h2 className="font-semibold text-sm md:text-base truncate mt-0.5">{currentUser}</h2>
+          <div className="mt-2">
+            <div className="inline-flex min-w-0 max-w-full rounded-lg bg-white/8 border border-white/10 px-3 py-1.5 items-center gap-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 shrink-0">User</p>
+              <h2 className="font-semibold text-sm md:text-base truncate">{currentUser}</h2>
             </div>
-            <div className="rounded-xl bg-white/8 border border-white/10 px-3.5 py-2.5 flex items-center justify-between md:justify-center gap-2">
-              <span className="text-xs text-slate-300">Online</span>
-              <span className="text-base font-extrabold text-[#ffd8c4]">{onlineCount}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-            >
-              Leave Room
-            </button>
           </div>
         </header>
 
