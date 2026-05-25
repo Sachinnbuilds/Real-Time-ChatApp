@@ -20,6 +20,8 @@ const ChatPage = () => {
   const [connectionState, setConnectionState] = useState("CONNECTING");
   const [showReconnectToast, setShowReconnectToast] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [editingMessageId, setEditingMessageId] = useState("");
+  const [editInput, setEditInput] = useState("");
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
 
@@ -53,6 +55,17 @@ const ChatPage = () => {
     }
   }, [messages]);
 
+  const applyIncomingMessage = (incomingMessage) => {
+    const eventType = incomingMessage?.eventType || "CREATED";
+    if (!incomingMessage?.id || eventType === "CREATED") {
+      setMessages((prev) => [...prev, incomingMessage]);
+      return;
+    }
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === incomingMessage.id ? { ...msg, ...incomingMessage } : msg))
+    );
+  };
+
   useEffect(() => {
     if (!connected || !roomId) return undefined;
 
@@ -67,7 +80,7 @@ const ChatPage = () => {
         toast.success("Connected");
         client.subscribe(`/topic/room/${roomId}`, (message) => {
           const newMessage = JSON.parse(message.body);
-          setMessages((prev) => [...prev, newMessage]);
+          applyIncomingMessage(newMessage);
         });
       },
       onStompError: () => {
@@ -103,6 +116,46 @@ const ChatPage = () => {
       });
       setInput("");
     }
+  };
+
+  const startEdit = (message) => {
+    setEditingMessageId(message.id);
+    setEditInput(message.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId("");
+    setEditInput("");
+  };
+
+  const saveEdit = () => {
+    const client = stompClientRef.current;
+    const content = editInput.trim();
+    if (!client?.connected || !content || content.length > MAX_MESSAGE_LENGTH || !editingMessageId) return;
+
+    client.publish({
+      destination: `/app/editMessage/${roomId}`,
+      body: JSON.stringify({
+        roomId,
+        messageId: editingMessageId,
+        editor: currentUser,
+        content,
+      }),
+    });
+    cancelEdit();
+  };
+
+  const deleteMessage = (messageId) => {
+    const client = stompClientRef.current;
+    if (!client?.connected) return;
+    client.publish({
+      destination: `/app/deleteMessage/${roomId}`,
+      body: JSON.stringify({
+        roomId,
+        messageId,
+        requester: currentUser,
+      }),
+    });
   };
 
   function handleLogout() {
@@ -174,7 +227,7 @@ const ChatPage = () => {
           {!isLoadingMessages &&
             messages.map((message, index) => (
               <div
-                key={index}
+                key={message.id || `${message.sender}-${index}`}
                 className={`mb-3 flex ${
                   message.sender === currentUser ? "justify-end" : "justify-start"
                 } animate-[fadeInMsg_.2s_ease]`}
@@ -187,8 +240,40 @@ const ChatPage = () => {
                   }`}
                 >
                   <p className="text-xs font-bold opacity-80 mb-1">{message.sender}</p>
-                  <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                  <p className="text-[11px] opacity-70 mt-1">{timeAgo(message.timeStamp)}</p>
+                  {editingMessageId === message.id ? (
+                    <div className="space-y-2">
+                      <input
+                        value={editInput}
+                        onChange={(e) => setEditInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+                        className="w-full rounded-xl px-3 py-2 text-sm text-[var(--ink)]"
+                      />
+                      <div className="flex gap-2 text-xs">
+                        <button onClick={saveEdit} className="px-2 py-1 rounded bg-white text-[var(--ink)] font-semibold">
+                          Save
+                        </button>
+                        <button onClick={cancelEdit} className="px-2 py-1 rounded bg-black/20 text-white font-semibold">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                      <p className="text-[11px] opacity-70 mt-1">
+                        {timeAgo(message.timeStamp)}{message.edited ? " • edited" : ""}
+                      </p>
+                    </>
+                  )}
+                  {message.sender === currentUser && !message.deleted && editingMessageId !== message.id && (
+                    <div className="mt-1 flex gap-2 text-[11px]">
+                      <button onClick={() => startEdit(message)} className="underline opacity-80">
+                        Edit
+                      </button>
+                      <button onClick={() => deleteMessage(message.id)} className="underline opacity-80">
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
