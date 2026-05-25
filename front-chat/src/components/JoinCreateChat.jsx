@@ -190,8 +190,8 @@ const JoinCreateChat = () => {
         </div>
       </div>
 
-      <footer className="max-w-6xl mx-auto mt-4">
-        <div className="bg-white/90 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)] text-xs md:text-sm text-[var(--ink)] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
+      <footer className="mt-4 flex justify-center">
+        <div className="inline-flex w-fit max-w-[95vw] bg-white/90 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)] text-xs md:text-sm text-[var(--ink)] flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
           <span className="font-semibold">Sachin Ramesh</span>
           <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="mailto:sachinrc2006@gmail.com">
