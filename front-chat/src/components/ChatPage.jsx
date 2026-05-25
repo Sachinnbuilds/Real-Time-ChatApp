@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MdClose, MdContentCopy, MdSend, MdShare } from "react-icons/md";
+import { MdChatBubbleOutline, MdClose, MdContentCopy, MdSend, MdShare } from "react-icons/md";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
 import SockJS from "sockjs-client";
@@ -193,6 +193,8 @@ const ChatPage = () => {
       : typingUsers.length === 1
       ? `${typingUsers[0]} is typing...`
       : `${typingUsers.length} people are typing...`;
+  const counterTextClass =
+    inputLength > 475 ? "text-rose-500" : inputLength > 450 ? "text-amber-600" : "text-[var(--muted)]";
   const inviteUrl = `${window.location.origin}/join/${encodeURIComponent(roomId)}?inviter=${encodeURIComponent(
     currentUser
   )}`;
@@ -228,7 +230,7 @@ const ChatPage = () => {
   return (
     <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-3 md:py-6">
       <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-none md:shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="bg-[var(--ink)] text-white px-4 py-3 md:px-8 md:py-5 border-b border-white/10">
+        <header className="bg-[var(--ink)] text-white px-4 py-2.5 md:px-8 md:py-5 border-b border-white/10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Room</p>
@@ -250,15 +252,15 @@ const ChatPage = () => {
             </div>
             <button
               onClick={handleLogout}
-              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3]"
+              className="col-span-2 md:col-span-1 bg-white text-[var(--ink)] rounded-xl px-4 py-2.5 text-sm font-bold hover:bg-[#f3f3f3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               Leave Room
             </button>
           </div>
         </header>
 
-        <div className="px-4 md:px-8 py-2 bg-white border-b border-[#efefef]">
-          <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap">
+        <div className="relative px-4 md:px-8 py-2 bg-white border-b border-[#efefef]">
+          <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap pr-6">
             {participants.map((participant) => (
               <span
                 key={participant}
@@ -272,20 +274,25 @@ const ChatPage = () => {
               </span>
             ))}
           </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
         </div>
 
         <main ref={chatBoxRef} className="min-h-0 overflow-auto px-3 md:px-8 py-4 md:py-5 bg-[var(--surface)]">
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
-              <div className="h-14 w-1/2 bg-[var(--surface-2)] rounded-2xl" />
-              <div className="h-14 w-2/3 bg-[var(--surface-2)] rounded-2xl ml-auto" />
-              <div className="h-14 w-1/3 bg-[var(--surface-2)] rounded-2xl" />
+              <div className="h-16 w-[55%] bg-[var(--surface-2)] rounded-[1.35rem]" />
+              <div className="h-16 w-[70%] bg-[var(--surface-2)] rounded-[1.35rem] ml-auto" />
+              <div className="h-16 w-[40%] bg-[var(--surface-2)] rounded-[1.35rem]" />
             </div>
           )}
 
           {!isLoadingMessages && messages.length === 0 && (
-            <div className="h-full flex items-center justify-center text-[var(--muted)] font-semibold">
-              No messages yet. Start the conversation.
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center text-[var(--muted)]">
+                <MdChatBubbleOutline className="mx-auto mb-2" size={26} />
+                <p className="font-semibold">No messages yet</p>
+                <p className="text-xs mt-1">Start the conversation.</p>
+              </div>
             </div>
           )}
 
@@ -298,24 +305,24 @@ const ChatPage = () => {
                 } animate-[fadeInMsg_.2s_ease]`}
               >
                 <div
-                  className={`max-w-xs md:max-w-md rounded-[1.35rem] px-4 py-3 ${
+                  className={`max-w-[82%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 ${
                     message.sender === currentUser
                       ? "bg-[var(--peach-strong)] text-white"
                       : "bg-[var(--surface-2)] text-[var(--ink)]"
                   }`}
                 >
-                  <p className="text-xs font-bold opacity-80 mb-1">{message.sender}</p>
-                  <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                  <p className="text-[11px] opacity-70 mt-1">{timeAgo(message.timeStamp)}</p>
+                  <p className="text-[11px] font-semibold opacity-80 mb-1">{message.sender}</p>
+                  <p className="text-sm leading-6 break-words">{message.content}</p>
+                  <p className="text-[10px] opacity-60 mt-1.5">{timeAgo(message.timeStamp)}</p>
                 </div>
               </div>
             ))}
         </main>
 
-        <div className="h-16 px-2 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="sticky bottom-0 z-10 h-16 px-2 md:px-8 bg-white/95 supports-[backdrop-filter]:bg-white/80 backdrop-blur border-t border-[#efefef] shadow-[0_-6px_18px_rgba(30,30,30,0.05)] flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
           <button
             onClick={() => setShowInviteModal(true)}
-            className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] shrink-0"
+            className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] shrink-0"
           >
             Invite
           </button>
@@ -346,22 +353,22 @@ const ChatPage = () => {
             }}
             type="text"
             placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
-            className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none text-sm"
+            className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] text-sm placeholder:text-[#9195a1]"
           />
-          <div className="hidden sm:block text-[11px] text-[var(--muted)] w-14 text-right shrink-0">
+          <div className={`block text-[10px] md:text-[11px] w-14 text-right shrink-0 ${counterTextClass}`}>
             {inputLength}/{MAX_MESSAGE_LENGTH}
           </div>
           <button
             onClick={sendMessage}
             disabled={cannotSend}
-            className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+            className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] ${
               cannotSend ? "bg-[#ddd] text-[#999]" : "bg-[var(--peach-strong)] text-white"
             }`}
           >
             <MdSend size={18} />
           </button>
         </div>
-        <div className="px-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-xs text-[var(--muted)] min-h-6 truncate">
+        <div className="px-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[11px] text-[var(--muted)] min-h-6 truncate">
           {typingLabel}
         </div>
       </div>
@@ -372,7 +379,7 @@ const ChatPage = () => {
               <h2 className="text-xl font-bold text-[var(--ink)]">Invite To Room</h2>
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="h-9 w-9 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center"
+                className="h-9 w-9 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)]"
               >
                 <MdClose size={20} />
               </button>
@@ -382,25 +389,35 @@ const ChatPage = () => {
               Share this invite to let others join room <span className="font-semibold">{roomId}</span>.
             </p>
 
-            <div className="mt-5 flex justify-center">
-              <img src={qrUrl} alt={`Invite QR for room ${roomId}`} className="w-44 h-44 md:w-56 md:h-56 rounded-2xl border" />
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)] text-center">Invite QR</p>
+              <div className="mt-2 flex justify-center">
+                <img
+                  src={qrUrl}
+                  alt={`Invite QR for room ${roomId}`}
+                  className="w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-[#e7e4de]"
+                />
+              </div>
             </div>
 
-            <div className="mt-4 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink)] break-all">
-              {inviteUrl}
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)] mb-2">Invite Link</p>
+              <div className="rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink)] break-all border border-[#e7e4de]">
+                {inviteUrl}
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 onClick={copyInviteLink}
-                className="h-11 rounded-xl bg-[var(--ink)] text-white font-semibold flex items-center justify-center gap-2"
+                className="h-11 rounded-xl bg-[var(--ink)] text-white font-semibold flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)]"
               >
                 <MdContentCopy size={18} />
                 Copy Link
               </button>
               <button
                 onClick={shareInviteLink}
-                className="h-11 rounded-xl bg-[var(--surface-2)] text-[var(--ink)] font-semibold flex items-center justify-center gap-2"
+                className="h-11 rounded-xl bg-[var(--surface-2)] text-[var(--ink)] font-semibold flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)]"
               >
                 <MdShare size={18} />
                 Share

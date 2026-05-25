@@ -196,7 +196,7 @@ const JoinCreateChat = () => {
           <span className="font-semibold">Sachin Ramesh</span>
           <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="mailto:sachinrc2006@gmail.com">
-            sachinrc2006@gmail.com
+            Gmail
           </a>
           <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="https://www.linkedin.com/in/sachin-ramesh-448a46317" target="_blank" rel="noreferrer">
