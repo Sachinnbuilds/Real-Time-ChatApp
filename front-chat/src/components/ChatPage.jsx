@@ -181,7 +181,7 @@ const ChatPage = () => {
 
   return (
     <div className="min-h-screen px-3 py-6 md:px-6">
-      <div className="mx-auto max-w-5xl h-[92vh] rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-[0_20px_60px_rgba(30,30,30,0.25)] flex flex-col">
+      <div className="mx-auto max-w-5xl h-[92vh] rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
         <header className="h-20 bg-[var(--ink)] text-white px-5 md:px-8 flex items-center justify-between">
           <div>
             <p className="text-xs text-slate-300">Room</p>
@@ -223,7 +223,7 @@ const ChatPage = () => {
           </div>
         </div>
 
-        <main ref={chatBoxRef} className="flex-1 min-h-0 overflow-auto px-4 md:px-8 py-5 bg-[var(--surface)]">
+        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-4 md:px-8 py-5 bg-[var(--surface)]">
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
               <div className="h-14 w-1/2 bg-[var(--surface-2)] rounded-2xl" />
