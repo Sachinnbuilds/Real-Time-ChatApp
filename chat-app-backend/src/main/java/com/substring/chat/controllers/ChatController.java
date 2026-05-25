@@ -152,7 +152,7 @@ public class ChatController {
         Map<String, Object> presenceEvent = new HashMap<>();
         presenceEvent.put("roomId", roomId);
         presenceEvent.put("participants", new ArrayList<>(uniqueParticipants));
-        presenceEvent.put("count", sessions.size());
+        presenceEvent.put("count", uniqueParticipants.size());
         messagingTemplate.convertAndSend("/topic/room/" + roomId + "/presence", presenceEvent);
     }
 
