@@ -12,12 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate frontend API base URL
+        run: |
+          if [ -z "${VITE_API_BASE_URL}" ]; then
+            echo "VITE_API_BASE_URL is empty. Set it in GitHub Variables or Secrets."
+            exit 1
+          fi
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL != '' && vars.VITE_API_BASE_URL || secrets.VITE_API_BASE_URL }}
+
       - name: Install Dependencies and Build
         # This tells the runner to execute the build inside your frontend folder
         working-directory: ./front-chat
         run: npm ci && npm run build
         env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL != '' && vars.VITE_API_BASE_URL || secrets.VITE_API_BASE_URL }}
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
