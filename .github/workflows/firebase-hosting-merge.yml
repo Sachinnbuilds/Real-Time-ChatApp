@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Dependencies and Build
+        # This tells the runner to execute the build inside your frontend folder
+        working-directory: ./front-chat
         run: npm ci && npm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
@@ -23,3 +25,5 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHAT_REAL_TIME_7DE9D }}
           channelId: live
           projectId: chat-real-time-7de9d
+          # This tells the Firebase CLI where to find firebase.json
+          entryPoint: ./front-chat
