@@ -280,16 +280,18 @@ const ChatPage = () => {
               <h1 className="font-extrabold text-xl md:text-4xl leading-tight truncate">{roomId}</h1>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <div className={`text-[11px] md:text-xs font-bold px-3.5 py-1 rounded-full text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}>
+              <div
+                className={`h-10 min-w-[122px] rounded-xl px-4 inline-flex items-center justify-center text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] ${statusBadgeClass}`}
+              >
                 {statusText}
               </div>
-              <div className="rounded-lg bg-white/8 border border-white/10 px-3 py-1.5 flex items-center gap-1.5">
-                <span className="text-xs text-slate-300">Online</span>
+              <div className="h-10 min-w-[122px] rounded-xl bg-white/8 border border-white/10 px-4 inline-flex items-center justify-center gap-2">
+                <span className="text-sm text-slate-300">Online</span>
                 <span className="text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-white text-[var(--ink)] rounded-lg px-3.5 py-1.5 text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                className="h-10 min-w-[146px] rounded-xl bg-white text-[var(--ink)] px-4 inline-flex items-center justify-center text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
               >
                 Leave Room
               </button>
