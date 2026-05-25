@@ -51,15 +51,23 @@ public class RoomController {
     //get room: join
     @GetMapping("/{roomId}")
     public ResponseEntity<?> joinRoom(
-            @PathVariable String roomId
+            @PathVariable String roomId,
+            @RequestParam(value = "username", required = false) String username
     ) {
 
         Room room = roomRepository.findByRoomId(roomId);
         if (room == null) {
             throw new IllegalArgumentException("Room not found");
         }
+        String normalizedUsername = username == null ? "" : username.trim();
+        if (normalizedUsername.length() < 2 || normalizedUsername.length() > 40) {
+            throw new IllegalArgumentException("Username must be between 2 and 40 characters");
+        }
         if (presenceTracker.getActiveSessionCount(roomId) >= PresenceTracker.MAX_ACTIVE_ROOM_MEMBERS) {
             throw new IllegalArgumentException("Room is full (max 5 people). Try another room.");
+        }
+        if (presenceTracker.isUsernameTaken(roomId, normalizedUsername)) {
+            throw new IllegalArgumentException("Username already in use in this room");
         }
         return ResponseEntity.ok(room);
     }

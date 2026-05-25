@@ -62,4 +62,30 @@ public class PresenceTracker {
     public String getRoomForSession(String sessionId) {
         return sessionToRoom.get(sessionId);
     }
+
+    public boolean isSessionInRoom(String sessionId, String roomId) {
+        String activeRoom = sessionToRoom.get(sessionId);
+        return activeRoom != null && activeRoom.equals(roomId);
+    }
+
+    public boolean isUsernameTaken(String roomId, String username) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        Map<String, String> sessions = roomParticipantsBySession.getOrDefault(roomId, Map.of());
+        return sessions.values().stream().anyMatch(existing -> existing.equalsIgnoreCase(username.trim()));
+    }
+
+    public boolean isUsernameTakenByAnotherSession(String roomId, String username, String sessionId) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        Map<String, String> sessions = roomParticipantsBySession.getOrDefault(roomId, Map.of());
+        for (Map.Entry<String, String> entry : sessions.entrySet()) {
+            if (!entry.getKey().equals(sessionId) && entry.getValue().equalsIgnoreCase(username.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

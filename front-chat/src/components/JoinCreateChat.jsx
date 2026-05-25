@@ -58,7 +58,7 @@ const JoinCreateChat = () => {
     setLoadingAction("Joining room...");
     setIsSubmitting(true);
     try {
-      const room = await joinChatApi(detail.roomId.trim());
+      const room = await joinChatApi(detail.roomId.trim(), detail.userName.trim());
       toast.success("Joined room");
       setCurrentUser(detail.userName.trim());
       setRoomId(room.roomId);

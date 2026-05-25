@@ -9,8 +9,10 @@ export const createRoomApi = async (roomDetail) => {
   return respone.data;
 };
 
-export const joinChatApi = async (roomId) => {
-  const response = await httpClient.get(`/api/v1/rooms/${roomId}`);
+export const joinChatApi = async (roomId, userName) => {
+  const response = await httpClient.get(
+    `/api/v1/rooms/${roomId}?username=${encodeURIComponent(userName)}`
+  );
   return response.data;
 };
 

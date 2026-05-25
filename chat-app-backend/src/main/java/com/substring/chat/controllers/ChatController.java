@@ -95,6 +95,10 @@ public class ChatController {
             sendSystemEventToSession(sessionId, "ROOM_FULL", "Room is full (max 5 people). Try another room.");
             return;
         }
+        if (presenceTracker.isUsernameTakenByAnotherSession(roomId, sender, sessionId)) {
+            sendSystemEventToSession(sessionId, "USERNAME_TAKEN", "Username already in use in this room.");
+            return;
+        }
         presenceTracker.addSession(roomId, sessionId, sender);
         broadcastPresence(roomId);
     }
