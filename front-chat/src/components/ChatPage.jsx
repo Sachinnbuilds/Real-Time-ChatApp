@@ -228,7 +228,7 @@ const ChatPage = () => {
   return (
     <div className="min-h-[100dvh] px-0 py-0 md:min-h-screen md:px-3 md:py-6">
       <div className="mx-auto max-w-5xl h-[100dvh] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden bg-[var(--surface)] shadow-none md:shadow-[0_20px_60px_rgba(30,30,30,0.25)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
-        <header className="bg-[var(--ink)] text-white px-4 py-4 md:px-8 md:py-5 border-b border-white/10">
+        <header className="bg-[var(--ink)] text-white px-4 py-3 md:px-8 md:py-5 border-b border-white/10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Room</p>
@@ -239,7 +239,7 @@ const ChatPage = () => {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-[1fr_auto_auto] gap-3 items-center">
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-[1fr_auto_auto] gap-2 md:gap-3 items-center">
             <div className="min-w-0 rounded-xl bg-white/5 px-3 py-2">
               <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">User</p>
               <h2 className="font-semibold text-sm md:text-base truncate">{currentUser}</h2>
@@ -274,7 +274,7 @@ const ChatPage = () => {
           </div>
         </div>
 
-        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-4 md:px-8 py-5 bg-[var(--surface)]">
+        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-3 md:px-8 py-4 md:py-5 bg-[var(--surface)]">
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
               <div className="h-14 w-1/2 bg-[var(--surface-2)] rounded-2xl" />
@@ -312,7 +312,7 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="h-16 px-3 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2">
+        <div className="h-16 px-2 md:px-8 bg-white border-t border-[#efefef] flex items-center gap-2 pb-[env(safe-area-inset-bottom)]">
           <button
             onClick={() => setShowInviteModal(true)}
             className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] shrink-0"
@@ -361,7 +361,7 @@ const ChatPage = () => {
             <MdSend size={18} />
           </button>
         </div>
-        <div className="px-3 md:px-8 pb-3 text-xs text-[var(--muted)] h-6 truncate">
+        <div className="px-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-xs text-[var(--muted)] min-h-6 truncate">
           {typingLabel}
         </div>
       </div>

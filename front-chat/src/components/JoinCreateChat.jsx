@@ -112,8 +112,6 @@ const JoinCreateChat = () => {
 
   return (
     <div className="min-h-[100dvh] px-3 py-8 md:px-6 md:py-12 relative bg-[linear-gradient(135deg,#f7c9b0,#f4ae8c)] overflow-hidden">
-      <div className="absolute w-10 h-10 rounded-full bg-[var(--peach-strong)]/90 top-7 left-10" />
-      <div className="absolute w-14 h-14 rounded-full bg-white/70 bottom-20 right-10" />
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] shadow-[0_24px_70px_rgba(60,30,10,0.25)] animate-[fadeIn_.25s_ease] bg-white">
           <div className="bg-white p-6 md:p-10 lg:p-12">
@@ -178,9 +176,6 @@ const JoinCreateChat = () => {
           </div>
 
           <section className="bg-[linear-gradient(145deg,#ec7b4f,#f2926b)] text-white p-6 md:p-10 flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full border border-white/20" />
-            <div className="absolute right-20 top-10 h-24 w-24 rounded-full border border-white/15" />
-            <div className="absolute left-8 bottom-14 h-16 w-16 rounded-full bg-white/10" />
             <div>
               <img src={chatIcon} className="w-12 h-12 rounded-2xl object-cover bg-white/15 p-1" alt="Chit Chat" />
               <h1 className="mt-5 text-4xl md:text-5xl font-extrabold leading-none">Chit Chat</h1>
@@ -195,21 +190,20 @@ const JoinCreateChat = () => {
         </div>
       </div>
 
-      <footer className="max-w-6xl mx-auto mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between text-xs md:text-sm text-[var(--ink)]">
-        <div className="bg-white/85 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)]">
+      <footer className="max-w-6xl mx-auto mt-4">
+        <div className="bg-white/90 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)] text-xs md:text-sm text-[var(--ink)] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
           <span className="font-semibold">Sachin Ramesh</span>
-          <span className="mx-2 text-[var(--muted)]">|</span>
+          <span className="text-[var(--muted)]">|</span>
+          <a className="underline" href="mailto:sachinrc2006@gmail.com">
+            sachinrc2006@gmail.com
+          </a>
+          <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="https://www.linkedin.com/in/sachin-ramesh-448a46317" target="_blank" rel="noreferrer">
             LinkedIn
           </a>
-          <span className="mx-2 text-[var(--muted)]">|</span>
+          <span className="text-[var(--muted)]">|</span>
           <a className="underline" href="https://github.com/Sachinnbuilds" target="_blank" rel="noreferrer">
             GitHub
-          </a>
-        </div>
-        <div className="bg-white/85 rounded-xl px-3 py-2 shadow-[0_8px_20px_rgba(80,40,20,0.15)]">
-          <a className="underline" href="mailto:sachinrc2006@gmail.com">
-            sachinrc2006@gmail.com
           </a>
         </div>
       </footer>
