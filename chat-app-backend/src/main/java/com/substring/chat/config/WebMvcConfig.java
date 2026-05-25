@@ -14,7 +14,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns(frontendUrl, "https://chat-real-time-7de9d.web.app")
+                .allowedOriginPatterns(
+                        frontendUrl,
+                        "https://chat-real-time-7de9d.web.app",
+                        "https://chat-real-time-7de9d.firebaseapp.com"
+                )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);

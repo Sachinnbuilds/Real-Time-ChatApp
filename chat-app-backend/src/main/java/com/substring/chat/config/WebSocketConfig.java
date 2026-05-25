@@ -23,7 +23,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chat")
-                .setAllowedOriginPatterns(frontendUrl, "https://*.vercel.app", "https://*.netlify.app")
+                .setAllowedOriginPatterns(
+                        frontendUrl,
+                        "https://chat-real-time-7de9d.web.app",
+                        "https://chat-real-time-7de9d.firebaseapp.com",
+                        "https://*.vercel.app",
+                        "https://*.netlify.app"
+                )
                 .withSockJS();
     }
 }
