@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import chatIcon from "../assets/chat.png";
 import toast from "react-hot-toast";
-import { createRoomApi, joinChatApi } from "../services/RoomService";
+import { createRoomApi, joinChatApi, waitForBackendReady } from "../services/RoomService";
 import useChatContext from "../context/ChatContext";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
@@ -64,11 +64,19 @@ const JoinCreateChat = () => {
     return true;
   }
 
+  async function warmUpBackend(initialAction) {
+    setLoadingAction(initialAction);
+    await waitForBackendReady(() => {
+      setLoadingAction("Starting chat service... this can take up to a minute");
+    });
+  }
+
   async function joinChat() {
     if (!validateForm()) return;
-    setLoadingAction("Joining room...");
     setIsSubmitting(true);
     try {
+      await warmUpBackend("Checking chat service...");
+      setLoadingAction("Joining room...");
       const room = await joinChatApi(detail.roomId.trim(), detail.userName.trim());
       toast.success("Joined room");
       setCurrentUser(detail.userName.trim());
@@ -78,6 +86,8 @@ const JoinCreateChat = () => {
     } catch (error) {
       if (error?.response) {
         toast.error(getReadableError(error));
+      } else if (error?.message === "Backend did not become ready in time") {
+        toast.error("Chat service is waking up. Please try again in a few moments.");
       } else {
         toast.error("Error in joining room");
       }
@@ -89,9 +99,10 @@ const JoinCreateChat = () => {
 
   async function createRoom() {
     if (!validateForm()) return;
-    setLoadingAction("Creating room...");
     setIsSubmitting(true);
     try {
+      await warmUpBackend("Checking chat service...");
+      setLoadingAction("Creating room...");
       const response = await createRoomApi(detail.roomId.trim());
       toast.success("Room created");
       setCurrentUser(detail.userName.trim());
@@ -101,6 +112,8 @@ const JoinCreateChat = () => {
     } catch (error) {
       if (error?.response) {
         toast.error(getReadableError(error));
+      } else if (error?.message === "Backend did not become ready in time") {
+        toast.error("Chat service is waking up. Please try again in a few moments.");
       } else {
         toast.error("Error in creating room");
       }
