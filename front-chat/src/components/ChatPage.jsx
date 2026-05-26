@@ -10,6 +10,7 @@ import { getMessagess } from "../services/RoomService";
 import { timeAgo } from "../config/helper";
 
 const MAX_MESSAGE_LENGTH = 500;
+const TYPING_INDICATOR_TTL_MS = 2500;
 
 const ChatPage = () => {
   const { roomId, currentUser, connected, setConnected, setRoomId, setCurrentUser } = useChatContext();
@@ -22,11 +23,13 @@ const ChatPage = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [participants, setParticipants] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
-  const [typingUsers, setTypingUsers] = useState([]);
+  const [typingState, setTypingState] = useState({});
   const [showInviteModal, setShowInviteModal] = useState(false);
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  const typingUsers = Object.keys(typingState);
 
   useEffect(() => {
     if (!connected) {
@@ -102,6 +105,24 @@ const ChatPage = () => {
   }, [messages]);
 
   useEffect(() => {
+    if (typingUsers.length === 0) return undefined;
+
+    const pruneTimer = setInterval(() => {
+      const now = Date.now();
+      setTypingState((prev) => {
+        const next = Object.fromEntries(
+          Object.entries(prev).filter(([, expiresAt]) => expiresAt > now)
+        );
+        return Object.keys(next).length === Object.keys(prev).length ? prev : next;
+      });
+    }, 500);
+
+    return () => {
+      clearInterval(pruneTimer);
+    };
+  }, [typingUsers.length]);
+
+  useEffect(() => {
     if (!connected || !roomId) return undefined;
 
     const client = new Client({
@@ -127,6 +148,14 @@ const ChatPage = () => {
         });
         client.subscribe(`/topic/room/${roomId}`, (message) => {
           const newMessage = JSON.parse(message.body);
+          if (newMessage?.sender) {
+            setTypingState((prev) => {
+              if (!prev[newMessage.sender]) return prev;
+              const next = { ...prev };
+              delete next[newMessage.sender];
+              return next;
+            });
+          }
           setMessages((prev) => [...prev, newMessage]);
         });
         client.subscribe(`/topic/room/${roomId}/presence`, (message) => {
@@ -139,11 +168,19 @@ const ChatPage = () => {
           if (!payload?.sender || payload.sender === currentUser) {
             return;
           }
-          setTypingUsers((prev) => {
+          setTypingState((prev) => {
             if (payload.typing) {
-              return prev.includes(payload.sender) ? prev : [...prev, payload.sender];
+              return {
+                ...prev,
+                [payload.sender]: Date.now() + TYPING_INDICATOR_TTL_MS,
+              };
             }
-            return prev.filter((user) => user !== payload.sender);
+            if (!prev[payload.sender]) {
+              return prev;
+            }
+            const next = { ...prev };
+            delete next[payload.sender];
+            return next;
           });
         });
         client.publish({
@@ -182,6 +219,7 @@ const ChatPage = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      setTypingState({});
       if (client.active) client.deactivate();
       stompClientRef.current = null;
     };
@@ -272,26 +310,28 @@ const ChatPage = () => {
 
   return (
     <div className="min-h-[var(--chat-mobile-vh)] h-[var(--chat-mobile-vh)] px-0 py-0 bg-[var(--surface)] md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6 overflow-hidden">
-      <div className="mx-auto max-w-5xl h-[var(--chat-mobile-vh)] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto_auto]">
+      <div className="mx-auto max-w-5xl h-[var(--chat-mobile-vh)] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto]">
         <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-4 border-b border-white/10">
-          <div className="flex items-start md:items-center justify-between gap-3">
-            <div className="min-w-0">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 pr-1">
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Room</p>
               <h1 className="font-extrabold text-xl md:text-4xl leading-tight truncate">{roomId}</h1>
             </div>
-            <div className="flex items-center justify-end gap-1.5 md:gap-2">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
+              <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-0.5">
               <div
-                className={`h-9 md:h-10 rounded-lg md:rounded-xl px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] md:min-w-[122px] ${statusBadgeClass}`}
+                  className={`h-9 md:h-10 rounded-lg md:rounded-xl px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold text-white shadow-[0_6px_14px_rgba(0,0,0,0.2)] md:min-w-[122px] ${statusBadgeClass}`}
               >
                 {statusText}
               </div>
-              <div className="h-9 md:h-10 rounded-lg md:rounded-xl bg-white/8 border border-white/10 px-2.5 md:px-4 inline-flex items-center justify-center gap-1.5 md:gap-2 whitespace-nowrap md:min-w-[122px]">
+                <div className="h-9 md:h-10 rounded-lg md:rounded-xl bg-white/8 border border-white/10 px-2.5 md:px-4 inline-flex items-center justify-center gap-1.5 md:gap-2 whitespace-nowrap md:min-w-[122px]">
                 <span className="text-xs md:text-sm text-slate-300">Online</span>
                 <span className="text-xs md:text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
               </div>
+              </div>
               <button
                 onClick={handleLogout}
-                className="h-9 md:h-10 rounded-lg md:rounded-xl bg-white text-[var(--ink)] px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:min-w-[146px]"
+                className="h-10 md:h-10 rounded-lg md:rounded-xl bg-white text-[var(--ink)] px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 w-full md:w-auto md:min-w-[146px]"
               >
                 Leave Room
               </button>
@@ -305,7 +345,7 @@ const ChatPage = () => {
             <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Participants</span>
             <span className="text-[11px] font-semibold text-[var(--ink)]">{participants.length}</span>
           </div>
-          <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap pr-6">
+          <div className="flex gap-2 items-center min-h-7 overflow-x-auto whitespace-nowrap pr-3 md:pr-6 pb-1 scrollbar-thin">
             {participants.map((participant) => (
               <span
                 key={participant}
@@ -350,7 +390,7 @@ const ChatPage = () => {
                 } animate-[fadeInMsg_.2s_ease]`}
               >
                 <div
-                  className={`max-w-[82%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
+                    className={`max-w-[88%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
                     message.sender === currentUser
                       ? "bg-[var(--peach-strong)] text-white"
                       : "bg-white border border-[#e9e4dc] text-[var(--ink)]"
@@ -364,7 +404,14 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
+        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
+          <div className="min-h-6 px-1 pb-2 text-xs text-[var(--muted)]">
+            {typingLabel && (
+              <div className="inline-flex max-w-full items-center rounded-full bg-white/90 px-3 py-1 shadow-[0_6px_18px_rgba(30,30,30,0.06)]">
+                <span className="truncate">{typingLabel}</span>
+              </div>
+            )}
+          </div>
           <div className="rounded-2xl bg-white/95 supports-[backdrop-filter]:bg-white/88 backdrop-blur border border-[#ebe8e2] shadow-[0_8px_22px_rgba(30,30,30,0.08)] px-2 md:px-3 py-2 flex items-center gap-2">
             <button
               onClick={() => setShowInviteModal(true)}
@@ -414,9 +461,6 @@ const ChatPage = () => {
               <MdSend size={18} />
             </button>
           </div>
-        </div>
-        <div className="px-3 md:px-8 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-[11px] text-[var(--muted)] min-h-6 truncate">
-          {typingLabel}
         </div>
       </div>
       {showInviteModal && (
