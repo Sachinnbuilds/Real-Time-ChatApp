@@ -2,7 +2,7 @@
 
 <div align="center">
 
-### Real-Time Chat Platform Built With Java, Spring Boot, WebSocket/STOMP, MongoDB, React, and Docker
+### Real-Time Chat Platform Built With Java, Spring Boot, WebSocket/STOMP, MongoDB, React, and Dockerized For Deployment 
 
 [![Java](https://img.shields.io/badge/Java-21-E76F00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
