@@ -1,85 +1,267 @@
-# Real-Time Chat App
+# Chit Chat
 
-A full-stack real-time chat application built with React, Spring Boot WebSockets (STOMP + SockJS), and MongoDB Atlas.
+<div align="center">
 
-## Live Architecture
+### Real-Time Chat Platform Built With Java, Spring Boot, WebSocket/STOMP, MongoDB, React, and Docker
 
-- Frontend: Vercel (React + Vite)
-- Backend: Render (Spring Boot)
-- Database: MongoDB Atlas (M0 free tier)
-- CI/CD: GitHub push triggers auto-deploy on Vercel + Render
+[![Java](https://img.shields.io/badge/Java-21-E76F00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![WebSocket](https://img.shields.io/badge/WebSocket-STOMP-1F2937?style=for-the-badge&logo=socketdotio&logoColor=white)](https://stomp.github.io/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![React](https://img.shields.io/badge/React-18-149ECA?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-## Core Features
+Fast, room-based chat with real-time messaging, live presence, typing indicators, invite links, and ephemeral room cleanup when the last participant leaves.
 
-- Create and join chat rooms
-- Real-time messaging via WebSockets
-- Room-scoped message streams
-- Persistent message history in MongoDB
-- Automatic reconnect handling for backend cold starts
+</div>
 
-## Engineering Decisions
+---
 
-- STOMP over SockJS:
-  selected for browser compatibility and simpler reconnect flow.
-- MongoDB Atlas:
-  managed free database for always-on cloud storage.
-- Environment-driven config:
-  sensitive and deployment-specific values are injected using environment variables.
-- UTC timestamps (`Instant`):
-  avoids timezone drift and keeps `time ago` behavior correct for all users.
+## Why This Project Stands Out
 
-## Recent Quality Improvements
+Most chat demos stop at sending messages. This project pushes further with production-oriented backend behavior:
 
-- Added connection status badge in chat UI (`Connected`, `Reconnecting`, `Offline`).
-- Added safe message input limits and disabled send behavior when disconnected.
-- Added global backend error model with consistent JSON error responses.
-- Added backend validation constraints for room ID, sender, and message content.
-- Strengthened CORS and WebSocket origin handling for cloud deployments.
+- Real-time messaging over `STOMP + SockJS` on top of Spring WebSocket
+- Room lifecycle management with automatic cleanup after the last disconnect
+- Presence tracking with active participant counts and duplicate username protection
+- Server-side input validation and structured API error responses
+- Environment-driven configuration for frontend origin and MongoDB connection
+- Dockerized backend packaging for deployable infrastructure
 
-## Tradeoffs
+---
 
-- No authentication in current MVP:
-  prioritized real-time reliability and deployment simplicity for first release.
-- Render free tier cold starts:
-  first request may be delayed after inactivity; client reconnect logic now handles this.
-- In-memory simple broker:
-  good for MVP scale, not ideal for horizontal scale without broker externalization.
+## Experience Snapshot
 
-## Local Development
+| Area | What It Delivers |
+| --- | --- |
+| Messaging | Low-latency room-based message delivery |
+| Presence | Live participant list and online count |
+| Collaboration Signals | Typing indicators and invite sharing |
+| Validation | Username, room ID, and message constraints enforced server-side |
+| Persistence | MongoDB-backed room and message storage |
+| Cleanup | Rooms removed automatically when inactive |
+| Deployment Readiness | Docker backend, env-based config, SPA hosting support |
+
+---
+
+## Product Preview
+
+<div align="center">
+  <img src="front-chat/src/assets/chat.png" alt="Chit Chat logo" width="120" />
+</div>
+
+### Core User Flow
+
+1. User creates or joins a room with a username.
+2. Frontend validates the room through REST endpoints.
+3. Client connects to `/chat` using SockJS and STOMP.
+4. Presence is registered on join and broadcast to the room.
+5. Messages, typing events, and presence updates stream in real time.
+6. When the final user disconnects, the room is automatically deleted.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["React Frontend<br/>Vite + React Router"] --> B["REST API<br/>Spring Boot"]
+    A --> C["WebSocket / SockJS<br/>STOMP Endpoint: /chat"]
+    B --> D["MongoDB<br/>rooms collection"]
+    C --> E["ChatController<br/>message, presence, typing events"]
+    E --> D
+    B --> F["RoomController<br/>create, join, history"]
+    F --> D
+    E --> G["PresenceTracker<br/>active sessions, usernames, limits"]
+```
+
+### Backend Responsibility Split
+
+| Layer | Responsibility |
+| --- | --- |
+| `RoomController` | Room creation, join validation, paginated message history |
+| `ChatController` | WebSocket message handling, presence events, typing events |
+| `PresenceTracker` | Session tracking, member limit enforcement, username collision checks |
+| `RoomRepository` | MongoDB access for rooms |
+| `GlobalExceptionHandler` | Consistent API error responses |
+
+---
+
+## Feature Set
+
+### Real-Time Communication
+
+- Room-scoped messaging via `/app/sendMessage/{roomId}`
+- Broadcast delivery to `/topic/room/{roomId}`
+- Live typing events on `/topic/room/{roomId}/typing`
+- Presence updates on `/topic/room/{roomId}/presence`
+
+### Presence and Room Control
+
+- Maximum of 5 active participants per room
+- Duplicate usernames blocked at join time
+- Users can join through direct invite links
+- Rooms are deleted when the final participant disconnects
+
+### Frontend Experience
+
+- Responsive join/create flow
+- Invite modal with shareable room URL
+- QR code generation for invitations
+- Connection state indicators: `Connecting`, `Connected`, `Reconnecting`, `Offline`
+- Auto-scroll chat feed and relative message timestamps
+
+### API Quality
+
+- Centralized exception handling
+- Structured error payloads with `code`, `message`, `hint`, and `timestamp`
+- Validation for room IDs, usernames, and message length
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+| --- | --- |
+| Backend | Java 21, Spring Boot 3.4, Spring Web, Spring WebSocket, Spring Validation |
+| Database | MongoDB |
+| Frontend | React 18, Vite, React Router, Axios, Tailwind CSS |
+| Real-Time | STOMP, SockJS |
+| UX Utilities | React Hot Toast, React Icons |
+| Packaging | Docker |
+
+---
+
+## Project Structure
+
+```text
+chat-app-main/
+├── chat-app-backend/
+│   ├── src/main/java/com/substring/chat/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── entities/
+│   │   ├── exceptions/
+│   │   ├── playload/
+│   │   ├── repositories/
+│   │   └── service/
+│   ├── src/main/resources/
+│   └── Dockerfile
+└── front-chat/
+    ├── src/components/
+    ├── src/config/
+    ├── src/context/
+    └── src/services/
+```
+
+---
+
+## API Surface
+
+### REST Endpoints
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/v1/rooms` | Create a room |
+| `GET` | `/api/v1/rooms/{roomId}?username=...` | Validate and join a room |
+| `GET` | `/api/v1/rooms/{roomId}/messages?page=0&size=50` | Fetch message history |
+
+### WebSocket / STOMP
+
+| Direction | Destination | Purpose |
+| --- | --- | --- |
+| Client -> Server | `/app/sendMessage/{roomId}` | Send a message |
+| Client -> Server | `/app/presence/join/{roomId}` | Register participant |
+| Client -> Server | `/app/presence/leave/{roomId}` | Leave room |
+| Client -> Server | `/app/typing/{roomId}` | Send typing status |
+| Server -> Client | `/topic/room/{roomId}` | Receive new messages |
+| Server -> Client | `/topic/room/{roomId}/presence` | Receive participant updates |
+| Server -> Client | `/topic/room/{roomId}/typing` | Receive typing updates |
+| Server -> Client | `/user/queue/system` | Receive room/system events |
+
+---
+
+## Validation Rules
+
+| Field | Rule |
+| --- | --- |
+| `roomId` | 3 to 60 characters |
+| `username` | 2 to 40 characters |
+| `message.content` | required, max 500 characters |
+| `room capacity` | max 5 active users |
+
+---
+
+## Local Setup
+
+### Prerequisites
+
+- Java 21
+- Maven
+- Node.js 18+
+- MongoDB running locally, or a remote MongoDB URI
+
+### 1. Start MongoDB
+
+Ensure MongoDB is available at:
+
+```bash
+mongodb://localhost:27017/chatapp
+```
+
+Or provide a custom `MONGODB_URI`.
+
+### 2. Run the Backend
+
+```bash
+cd chat-app-backend
+mvn spring-boot:run
+```
+
+Backend defaults:
+
+- Port: `8080`
+- WebSocket endpoint: `/chat`
+
+### 3. Run the Frontend
+
+```bash
+cd front-chat
+npm install
+npm run dev
+```
+
+Frontend default:
+
+- Vite app: `http://localhost:5173`
+
+---
+
+## Environment Configuration
 
 ### Backend
 
-1. Set `MONGODB_URI` (optional; defaults to localhost MongoDB).
-2. Run:
-   - Windows: `.\mvnw.cmd spring-boot:run`
-   - Mac/Linux: `./mvnw spring-boot:run`
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MONGODB_URI` | `mongodb://localhost:27017/chatapp` | MongoDB connection string |
+| `FRONTEND_URL` | `http://localhost:5173` | Allowed frontend origin |
 
 ### Frontend
 
-1. Set `VITE_API_BASE_URL` (optional; defaults to `http://localhost:8080`).
-2. Run:
-   - `npm install`
-   - `npm run dev`
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | Backend base URL |
 
-## Deployment Environment Variables
+---
 
-### Render (Backend)
+## Docker
 
-- `MONGODB_URI=<atlas-uri>`
-- `FRONTEND_URL=<vercel-production-url>`
+The backend includes a multi-stage Docker build.
 
-### Vercel (Frontend)
+```bash
+cd chat-app-backend
+docker build -t chit-chat-backend .
+docker run -p 8080:8080 -e MONGODB_URI="your_mongodb_uri" -e FRONTEND_URL="http://localhost:5173" chit-chat-backend
+```
 
-- `VITE_API_BASE_URL=<render-backend-url>`
-
-## Testing Strategy
-
-- Manual cross-tab tests for real-time delivery and room isolation.
-- Cold-start reconnection test for Render free tier behavior.
-- Compile/build checks on both frontend and backend for every production change.
-
-## Next Milestones
-
-- Add JWT authentication and room-level authorization.
-- Add integration tests for REST + WebSocket message flow.
-- Add presence indicators and delivery acknowledgments.
+---
