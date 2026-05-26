@@ -17,16 +17,44 @@ Fast, room-based chat with real-time messaging, live presence, typing indicators
 
 ---
 
-## Why This Project Stands Out
+## Real-Time Lifecycle
 
-Most chat demos stop at sending messages. This project pushes further with production-oriented backend behavior:
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <strong>1. Room Entry</strong><br/><br/>
+      Users create or join a room through REST validation before opening a live socket session.
+    </td>
+    <td width="25%" valign="top">
+      <strong>2. Presence Registration</strong><br/><br/>
+      The backend tracks active sessions, blocks duplicate usernames, and enforces the room capacity limit.
+    </td>
+    <td width="25%" valign="top">
+      <strong>3. Live Event Stream</strong><br/><br/>
+      Messages, typing signals, and presence updates are published over STOMP topics in real time.
+    </td>
+    <td width="25%" valign="top">
+      <strong>4. Ephemeral Cleanup</strong><br/><br/>
+      When the last participant disconnects, the room is automatically removed to keep storage clean.
+    </td>
+  </tr>
+</table>
 
-- Real-time messaging over `STOMP + SockJS` on top of Spring WebSocket
-- Room lifecycle management with automatic cleanup after the last disconnect
-- Presence tracking with active participant counts and duplicate username protection
-- Server-side input validation and structured API error responses
-- Environment-driven configuration for frontend origin and MongoDB connection
-- Dockerized backend packaging for deployable infrastructure
+```text
+Create / Join -> REST validation -> WebSocket connect -> Presence join
+             -> Message + typing events -> Disconnect -> Auto room cleanup
+```
+
+<div align="center">
+
+| System Focus | Implementation |
+| --- | --- |
+| Entry control | Room existence checks, username validation, participant limit enforcement |
+| Event delivery | STOMP destinations for messages, typing, presence, and system events |
+| Session safety | Server verifies active membership before accepting a message |
+| Data lifecycle | MongoDB persistence during activity, deletion when room becomes empty |
+
+</div>
 
 ---
 
