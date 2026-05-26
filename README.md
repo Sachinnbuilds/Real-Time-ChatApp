@@ -17,10 +17,16 @@ Fast, room-based chat with real-time messaging, live presence, typing indicators
 
 ---
 
-<div align="center">
-  <img src="assets/Chatpagepc.png" alt="Chat page desktop view" width="300" />
-  <img src="assets/Chatpagemobile.jpeg" alt="Chat page mobile view" width="300" />
-</div>
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/Chatpagepc.png" alt="Chat page desktop view" height="420" />
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/Chatpagemobile.jpeg" alt="Chat page mobile view" height="420" />
+    </td>
+  </tr>
+</table>
 
 ---
 
