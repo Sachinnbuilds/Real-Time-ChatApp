@@ -16,6 +16,7 @@ const JoinCreateChat = () => {
   const { setRoomId, setCurrentUser, setConnected } = useChatContext();
   const navigate = useNavigate();
   const { roomId: inviteRoomId } = useParams();
+  const isInviteFlow = Boolean(inviteRoomId);
   const [searchParams] = useSearchParams();
   const inviterName = searchParams.get("inviter")?.trim() || "";
 
@@ -49,8 +50,12 @@ const JoinCreateChat = () => {
     const roomId = detail.roomId.trim();
     const userName = detail.userName.trim();
 
-    if (!roomId || !userName) {
-      toast.error("Display name and room ID are required");
+    if (!userName) {
+      toast.error("Display name is required");
+      return false;
+    }
+    if (!roomId) {
+      toast.error(isInviteFlow ? "Invalid invite link. Please ask your friend for a new link." : "Room ID is required");
       return false;
     }
     if (roomId.length < 3 || roomId.length > 60) {
@@ -131,11 +136,22 @@ const JoinCreateChat = () => {
           <div className="bg-white p-6 md:p-10 lg:p-12">
             <div className="mb-6">
               <p className="text-xs uppercase tracking-[0.15em] text-[var(--muted)]">Instant Talk</p>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[var(--ink)]">Join / Create Room</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[var(--ink)]">
+                {isInviteFlow ? "Join Room" : "Join / Create Room"}
+              </h2>
             </div>
-          {inviterName && (
+          {isInviteFlow && (
             <div className="mb-4 rounded-xl bg-[var(--surface-2)] px-4 py-2 text-sm text-[var(--ink)]">
-              Invited by <span className="font-bold">{inviterName}</span>
+              {inviterName ? (
+                <>
+                  Invited by <span className="font-bold">{inviterName}</span> to room{" "}
+                  <span className="font-bold">{detail.roomId}</span>
+                </>
+              ) : (
+                <>
+                  You were invited to room <span className="font-bold">{detail.roomId}</span>
+                </>
+              )}
             </div>
           )}
 
@@ -166,26 +182,29 @@ const JoinCreateChat = () => {
                 value={detail.roomId}
                 type="text"
                 placeholder="e.g. java-team-room"
+                readOnly={isInviteFlow}
                 className="w-full bg-[var(--surface-2)] text-[var(--ink)] px-4 py-3 rounded-2xl border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--peach)]"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-6 md:mt-7">
+          <div className={`mt-6 md:mt-7 ${isInviteFlow ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}`}>
             <button
               disabled={isSubmitting}
               onClick={joinChat}
               className="py-3 rounded-2xl font-bold text-[var(--ink)] bg-white hover:bg-[#f4f4f4] disabled:opacity-60"
             >
-              {isSubmitting && loadingAction.startsWith("Joining") ? "Joining..." : "Join"}
+              {isSubmitting && loadingAction.startsWith("Joining") ? "Joining..." : "Join Room"}
             </button>
-            <button
-              disabled={isSubmitting}
-              onClick={createRoom}
-              className="py-3 rounded-2xl font-bold text-white bg-[var(--ink)] hover:bg-[var(--ink-soft)] disabled:opacity-60"
-            >
-              {isSubmitting && loadingAction.startsWith("Creating") ? "Creating..." : "Create"}
-            </button>
+            {!isInviteFlow && (
+              <button
+                disabled={isSubmitting}
+                onClick={createRoom}
+                className="py-3 rounded-2xl font-bold text-white bg-[var(--ink)] hover:bg-[var(--ink-soft)] disabled:opacity-60"
+              >
+                {isSubmitting && loadingAction.startsWith("Creating") ? "Creating..." : "Create"}
+              </button>
+            )}
           </div>
           </div>
 
