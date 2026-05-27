@@ -405,13 +405,6 @@ const ChatPage = () => {
         </main>
 
         <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
-          {shouldShowInviteFriendsPrompt && (
-            <div className="mb-2 px-1">
-              <div className="inline-flex max-w-full items-center rounded-full bg-[#fff1e9] text-[#7a3e24] border border-[#f3cdb9] px-3 py-1.5 text-xs font-semibold shadow-[0_6px_16px_rgba(122,62,36,0.12)]">
-                Invite your friends
-              </div>
-            </div>
-          )}
           <div className="min-h-6 px-1 pb-2 text-xs text-[var(--muted)]">
             {typingLabel && (
               <div className="inline-flex max-w-full items-center rounded-full bg-white/90 px-3 py-1 shadow-[0_6px_18px_rgba(30,30,30,0.06)]">
@@ -420,12 +413,20 @@ const ChatPage = () => {
             )}
           </div>
           <div className="rounded-2xl bg-white/95 supports-[backdrop-filter]:bg-white/88 backdrop-blur border border-[#ebe8e2] shadow-[0_8px_22px_rgba(30,30,30,0.08)] px-2 md:px-3 py-2 flex items-center gap-2">
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] shrink-0"
-            >
-              Invite
-            </button>
+            <div className="relative shrink-0">
+              {shouldShowInviteFriendsPrompt && (
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[#f3cdb9] bg-[#fff1e9] px-3 py-1 text-[11px] font-semibold text-[#7a3e24] shadow-[0_8px_18px_rgba(122,62,36,0.16)]">
+                  Invite your friends
+                  <span className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-r border-b border-[#f3cdb9] bg-[#fff1e9]" />
+                </div>
+              )}
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="h-10 px-3 md:px-4 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center text-xs md:text-sm font-semibold hover:bg-[#e8e7e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)]"
+              >
+                Invite
+              </button>
+            </div>
             <input
               value={input}
               onChange={(e) => {
