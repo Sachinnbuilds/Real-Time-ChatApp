@@ -210,11 +210,6 @@ const JoinCreateChat = () => {
                 />
               </div>
             )}
-            {!isInviteFlow && (
-              <p className="text-xs text-[var(--muted)]">
-                Creating auto-generates a room ID. Click Join to enter an existing room.
-              </p>
-            )}
           </div>
 
           <div className={`mt-6 md:mt-7 ${isInviteFlow ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}`}>
