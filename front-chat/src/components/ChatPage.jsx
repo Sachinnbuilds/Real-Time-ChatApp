@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { MdChatBubbleOutline, MdClose, MdContentCopy, MdSend, MdShare } from "react-icons/md";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
@@ -26,10 +26,19 @@ const ChatPage = () => {
   const [typingState, setTypingState] = useState({});
   const [showInviteModal, setShowInviteModal] = useState(false);
   const chatBoxRef = useRef(null);
+  const composerInputRef = useRef(null);
   const stompClientRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
   const typingUsers = Object.keys(typingState);
+
+  const scrollChatToBottom = useCallback((behavior = "auto") => {
+    if (!chatBoxRef.current) return;
+    chatBoxRef.current.scroll({
+      top: chatBoxRef.current.scrollHeight,
+      behavior,
+    });
+  }, []);
 
   useEffect(() => {
     if (!connected) {
@@ -40,45 +49,42 @@ const ChatPage = () => {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const isMobileViewport = () => window.matchMedia("(max-width: 767px)").matches;
-    const setMobileViewportHeight = () => {
-      if (!isMobileViewport()) {
-        document.documentElement.style.removeProperty("--chat-mobile-vh");
-        return;
-      }
+    const setMobileViewportSize = () => {
       const viewportHeight = window.visualViewport?.height || window.innerHeight;
       document.documentElement.style.setProperty("--chat-mobile-vh", `${Math.round(viewportHeight)}px`);
     };
 
-    setMobileViewportHeight();
+    setMobileViewportSize();
 
     const visualViewport = window.visualViewport;
-    window.addEventListener("resize", setMobileViewportHeight);
-    window.addEventListener("orientationchange", setMobileViewportHeight);
-    visualViewport?.addEventListener("resize", setMobileViewportHeight);
+    window.addEventListener("resize", setMobileViewportSize);
+    window.addEventListener("orientationchange", setMobileViewportSize);
+    visualViewport?.addEventListener("resize", setMobileViewportSize);
+    visualViewport?.addEventListener("scroll", setMobileViewportSize);
 
     return () => {
-      window.removeEventListener("resize", setMobileViewportHeight);
-      window.removeEventListener("orientationchange", setMobileViewportHeight);
-      visualViewport?.removeEventListener("resize", setMobileViewportHeight);
+      window.removeEventListener("resize", setMobileViewportSize);
+      window.removeEventListener("orientationchange", setMobileViewportSize);
+      visualViewport?.removeEventListener("resize", setMobileViewportSize);
+      visualViewport?.removeEventListener("scroll", setMobileViewportSize);
       document.documentElement.style.removeProperty("--chat-mobile-vh");
     };
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    if (!window.matchMedia("(max-width: 767px)").matches) return undefined;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
-    document.body.style.overflow = "hidden";
-    document.body.style.overscrollBehavior = "none";
-
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    if (!window.visualViewport) return undefined;
+    const visualViewport = window.visualViewport;
+    const maintainComposerVisibility = () => {
+      if (document.activeElement === composerInputRef.current) {
+        requestAnimationFrame(() => scrollChatToBottom("auto"));
+      }
     };
-  }, []);
+    visualViewport.addEventListener("resize", maintainComposerVisibility);
+    return () => {
+      visualViewport.removeEventListener("resize", maintainComposerVisibility);
+    };
+  }, [scrollChatToBottom]);
 
   useEffect(() => {
     async function loadMessages() {
@@ -96,13 +102,8 @@ const ChatPage = () => {
   }, [connected, roomId]);
 
   useEffect(() => {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scroll({
-        top: chatBoxRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages]);
+    scrollChatToBottom("smooth");
+  }, [messages, scrollChatToBottom]);
 
   useEffect(() => {
     if (typingUsers.length === 0) return undefined;
@@ -310,9 +311,18 @@ const ChatPage = () => {
     }
   };
 
+  const handleComposerFocus = () => {
+    requestAnimationFrame(() => scrollChatToBottom("auto"));
+    setTimeout(() => scrollChatToBottom("auto"), 180);
+  };
+
+  const handleComposerBlur = () => {
+    setTimeout(() => scrollChatToBottom("auto"), 120);
+  };
+
   return (
-    <div className="min-h-[var(--chat-mobile-vh)] h-[var(--chat-mobile-vh)] px-0 py-0 bg-[var(--surface)] md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6 overflow-hidden">
-      <div className="mx-auto max-w-5xl h-[var(--chat-mobile-vh)] md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto]">
+    <div className="h-[var(--chat-mobile-vh,100dvh)] min-h-[100dvh] px-0 py-0 bg-[var(--surface)] overflow-hidden md:min-h-screen md:h-auto md:bg-transparent md:px-4 md:py-6">
+      <div className="mx-auto max-w-5xl h-full md:h-[92vh] rounded-none md:rounded-[2rem] overflow-hidden border-0 md:border md:border-[#e6ded1] bg-[linear-gradient(180deg,#faf9f6_0%,#f4f2ee_100%)] shadow-none md:shadow-[0_22px_60px_rgba(38,26,18,0.22)] grid grid-rows-[auto_auto_minmax(0,1fr)_auto]">
         <header className="bg-[linear-gradient(120deg,#1f2430,#2a3040)] text-white px-4 py-3 md:px-8 md:py-4 border-b border-white/10">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0 pr-1">
@@ -390,7 +400,7 @@ const ChatPage = () => {
                 className="mb-3 flex w-full min-w-0 overflow-x-hidden px-1 animate-[fadeInMsg_.2s_ease]"
               >
                 <div
-                    className={`min-w-0 w-auto max-w-[min(80%,calc(100vw-env(safe-area-inset-left)-env(safe-area-inset-right)-1.5rem))] md:max-w-[70%] shrink overflow-hidden rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
+                    className={`min-w-0 w-auto max-w-[85%] sm:max-w-[80%] md:max-w-[70%] shrink overflow-hidden rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
                     message.sender === currentUser
                       ? "ml-auto mr-0 bg-[var(--peach-strong)] text-white"
                       : "mr-auto ml-0 bg-white border border-[#e9e4dc] text-[var(--ink)]"
@@ -428,6 +438,7 @@ const ChatPage = () => {
               </button>
             </div>
             <input
+              ref={composerInputRef}
               value={input}
               onChange={(e) => {
                 const nextValue = e.target.value.slice(0, MAX_MESSAGE_LENGTH);
@@ -452,6 +463,8 @@ const ChatPage = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !cannotSend) sendMessage();
               }}
+              onFocus={handleComposerFocus}
+              onBlur={handleComposerBlur}
               type="text"
               placeholder={isConnected ? "Write a message..." : "Waiting for connection..."}
               className="flex-1 min-w-0 bg-[var(--surface)] text-[var(--ink)] rounded-full px-4 md:px-5 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)] text-sm placeholder:text-[#9195a1]"
