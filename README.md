@@ -1,4 +1,4 @@
-# Chit Chat
+# Instant Talk
 
 <div align="center">
 
