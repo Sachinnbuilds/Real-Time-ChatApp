@@ -33,7 +33,7 @@ const JoinCreateChat = () => {
     const hint = error?.response?.data?.hint;
     if (code === "ROOM_NOT_FOUND") return "Room not found. Ask your friend to create it again.";
     if (code === "ROOM_FULL") return "Room is full (max 5 people). Try another room.";
-    if (code === "USERNAME_TAKEN") return "Username already in use in this room. Pick another name.";
+    if (code === "USERNAME_TAKEN") return "Display name already in use in this room. Pick another name.";
     if (code === "ROOM_EXISTS") return "Room already exists. Use Join or choose another room id.";
     return message || hint || "Something went wrong. Please try again.";
   }
@@ -50,7 +50,7 @@ const JoinCreateChat = () => {
     const userName = detail.userName.trim();
 
     if (!roomId || !userName) {
-      toast.error("Username and room ID are required");
+      toast.error("Display name and room ID are required");
       return false;
     }
     if (roomId.length < 3 || roomId.length > 60) {
@@ -58,7 +58,7 @@ const JoinCreateChat = () => {
       return false;
     }
     if (userName.length < 2 || userName.length > 40) {
-      toast.error("Username must be 2 to 40 characters");
+      toast.error("Display name must be 2 to 40 characters");
       return false;
     }
     return true;
@@ -130,7 +130,7 @@ const JoinCreateChat = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] shadow-[0_24px_70px_rgba(60,30,10,0.25)] animate-[fadeIn_.25s_ease] bg-white">
           <div className="bg-white p-6 md:p-10 lg:p-12">
             <div className="mb-6">
-              <p className="text-xs uppercase tracking-[0.15em] text-[var(--muted)]">Chit Chat</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-[var(--muted)]">Instant Talk</p>
               <h2 className="text-2xl md:text-3xl font-extrabold text-[var(--ink)]">Join / Create Room</h2>
             </div>
           {inviterName && (
@@ -142,7 +142,7 @@ const JoinCreateChat = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-[var(--ink)] mb-2">
-                Username
+                Display Name
               </label>
               <input
                 onChange={handleFormInputChange}
@@ -150,7 +150,7 @@ const JoinCreateChat = () => {
                 type="text"
                 id="name"
                 name="userName"
-                placeholder="e.g. Sachin"
+                placeholder="e.g. Alex (only for this room)"
                 className="w-full bg-[var(--surface-2)] text-[var(--ink)] px-4 py-3 rounded-2xl border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--peach)]"
               />
             </div>
@@ -191,8 +191,8 @@ const JoinCreateChat = () => {
 
           <section className="bg-[linear-gradient(145deg,#ec7b4f,#f2926b)] text-white p-6 md:p-10 flex flex-col justify-between relative overflow-hidden">
             <div>
-              <img src={chatIcon} className="w-12 h-12 rounded-2xl object-cover bg-white/15 p-1" alt="Chit Chat" />
-              <h1 className="mt-5 text-4xl md:text-5xl font-extrabold leading-none">Chit Chat</h1>
+              <img src={chatIcon} className="w-12 h-12 rounded-2xl object-cover bg-white/15 p-1" alt="Instant Talk" />
+              <h1 className="mt-5 text-4xl md:text-5xl font-extrabold leading-none">Instant Talk</h1>
               <p className="mt-4 text-base md:text-lg text-white/95 max-w-sm">
                 Fast, temporary chat rooms for instant convos.
               </p>
