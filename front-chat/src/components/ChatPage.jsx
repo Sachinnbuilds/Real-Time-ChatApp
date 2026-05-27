@@ -274,6 +274,8 @@ const ChatPage = () => {
       : typingUsers.length === 1
       ? `${typingUsers[0]} is typing...`
       : `${typingUsers.length} people are typing...`;
+  const shouldShowInviteFriendsPrompt =
+    !isLoadingMessages && messages.length === 0 && participants.length <= 1;
   const counterTextClass =
     inputLength > 475 ? "text-rose-500" : inputLength > 450 ? "text-amber-600" : "text-[var(--muted)]";
   const inviteUrl = `${window.location.origin}/join/${encodeURIComponent(roomId)}?inviter=${encodeURIComponent(
@@ -403,6 +405,13 @@ const ChatPage = () => {
         </main>
 
         <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
+          {shouldShowInviteFriendsPrompt && (
+            <div className="mb-2 px-1">
+              <div className="inline-flex max-w-full items-center rounded-full bg-[#fff1e9] text-[#7a3e24] border border-[#f3cdb9] px-3 py-1.5 text-xs font-semibold shadow-[0_6px_16px_rgba(122,62,36,0.12)]">
+                Invite your friends
+              </div>
+            </div>
+          )}
           <div className="min-h-6 px-1 pb-2 text-xs text-[var(--muted)]">
             {typingLabel && (
               <div className="inline-flex max-w-full items-center rounded-full bg-white/90 px-3 py-1 shadow-[0_6px_18px_rgba(30,30,30,0.06)]">
