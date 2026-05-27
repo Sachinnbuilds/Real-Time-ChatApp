@@ -362,7 +362,7 @@ const ChatPage = () => {
           <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#f7f6f3] to-transparent" />
         </div>
 
-        <main ref={chatBoxRef} className="min-h-0 overflow-auto px-3 md:px-8 py-4 md:py-5 bg-transparent">
+        <main ref={chatBoxRef} className="min-h-0 overflow-y-auto overflow-x-hidden px-3 md:px-8 py-4 md:py-5 bg-transparent">
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
               <div className="h-16 w-[55%] bg-[var(--surface-2)] rounded-[1.35rem]" />
@@ -390,14 +390,14 @@ const ChatPage = () => {
                 } animate-[fadeInMsg_.2s_ease]`}
               >
                 <div
-                    className={`max-w-[88%] sm:max-w-sm md:max-w-md lg:max-w-lg rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
+                    className={`min-w-0 w-fit max-w-[80%] md:max-w-[70%] rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
                     message.sender === currentUser
                       ? "bg-[var(--peach-strong)] text-white"
                       : "bg-white border border-[#e9e4dc] text-[var(--ink)]"
                   }`}
                 >
                   <p className="text-[11px] font-semibold opacity-80 mb-1">{message.sender}</p>
-                  <p className="text-sm leading-6 break-words">{message.content}</p>
+                  <p className="text-sm leading-6 break-words [overflow-wrap:anywhere]">{message.content}</p>
                   <p className="text-[10px] opacity-60 mt-1.5">{timeAgo(message.timeStamp)}</p>
                 </div>
               </div>
