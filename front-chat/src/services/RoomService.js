@@ -50,15 +50,17 @@ export const generateRoomApi = async () => {
 };
 
 export const joinChatApi = async (roomId, userName) => {
+  const encodedRoomId = encodeURIComponent(roomId);
   const response = await httpClient.get(
-    `/api/v1/rooms/${roomId}?username=${encodeURIComponent(userName)}`
+    `/api/v1/rooms/${encodedRoomId}?username=${encodeURIComponent(userName)}`
   );
   return response.data;
 };
 
 export const getMessagess = async (roomId, size = 50, page = 0) => {
+  const encodedRoomId = encodeURIComponent(roomId);
   const response = await httpClient.get(
-    `/api/v1/rooms/${roomId}/messages?size=${size}&page=${page}`
+    `/api/v1/rooms/${encodedRoomId}/messages?size=${size}&page=${page}`
   );
   return response.data;
 };

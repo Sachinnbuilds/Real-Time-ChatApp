@@ -27,6 +27,7 @@ const ChatPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const chatBoxRef = useRef(null);
   const composerInputRef = useRef(null);
+  const composerContainerRef = useRef(null);
   const stompClientRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -51,7 +52,13 @@ const ChatPage = () => {
 
     const setMobileViewportSize = () => {
       const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const viewportOffsetTop = window.visualViewport?.offsetTop || 0;
+      const keyboardInset = window.visualViewport
+        ? Math.max(0, window.innerHeight - (window.visualViewport.height + window.visualViewport.offsetTop))
+        : 0;
       document.documentElement.style.setProperty("--chat-mobile-vh", `${Math.round(viewportHeight)}px`);
+      document.documentElement.style.setProperty("--chat-mobile-offset-top", `${Math.round(viewportOffsetTop)}px`);
+      document.documentElement.style.setProperty("--chat-keyboard-inset", `${Math.round(keyboardInset)}px`);
     };
 
     setMobileViewportSize();
@@ -68,6 +75,36 @@ const ChatPage = () => {
       visualViewport?.removeEventListener("resize", setMobileViewportSize);
       visualViewport?.removeEventListener("scroll", setMobileViewportSize);
       document.documentElement.style.removeProperty("--chat-mobile-vh");
+      document.documentElement.style.removeProperty("--chat-mobile-offset-top");
+      document.documentElement.style.removeProperty("--chat-keyboard-inset");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const composerNode = composerContainerRef.current;
+    if (!composerNode) return undefined;
+
+    const updateComposerHeight = () => {
+      document.documentElement.style.setProperty("--chat-composer-h", `${Math.round(composerNode.offsetHeight)}px`);
+    };
+
+    updateComposerHeight();
+
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", updateComposerHeight);
+      return () => {
+        window.removeEventListener("resize", updateComposerHeight);
+        document.documentElement.style.removeProperty("--chat-composer-h");
+      };
+    }
+
+    const observer = new ResizeObserver(() => updateComposerHeight());
+    observer.observe(composerNode);
+
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--chat-composer-h");
     };
   }, []);
 
@@ -374,7 +411,10 @@ const ChatPage = () => {
           <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#f7f6f3] to-transparent" />
         </div>
 
-        <main ref={chatBoxRef} className="min-h-0 overflow-y-auto overflow-x-hidden px-3 md:px-8 py-4 md:py-5 bg-transparent">
+        <main
+          ref={chatBoxRef}
+          className="min-h-0 overflow-y-auto overflow-x-hidden px-3 md:px-8 py-4 md:py-5 bg-transparent pb-[calc(var(--chat-composer-h,116px)+env(safe-area-inset-bottom)+0.65rem)] md:pb-5"
+        >
           {isLoadingMessages && (
             <div className="space-y-3 animate-pulse">
               <div className="h-16 w-[55%] bg-[var(--surface-2)] rounded-[1.35rem]" />
@@ -414,7 +454,11 @@ const ChatPage = () => {
             ))}
         </main>
 
-        <div className="sticky bottom-0 z-10 px-3 md:px-8 pt-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)]">
+        <div
+          ref={composerContainerRef}
+          className="fixed inset-x-0 bottom-0 z-20 px-3 pt-2 pb-[calc(0.55rem+env(safe-area-inset-bottom))] bg-[linear-gradient(180deg,rgba(250,249,246,0),rgba(250,249,246,0.9)_42%,rgba(250,249,246,1)_100%)] md:relative md:inset-auto md:bottom-auto md:z-10 md:px-8"
+          style={{ bottom: "var(--chat-keyboard-inset, 0px)" }}
+        >
           <div className="min-h-6 px-1 pb-2 text-xs text-[var(--muted)]">
             {typingLabel && (
               <div className="inline-flex max-w-full items-center rounded-full bg-white/90 px-3 py-1 shadow-[0_6px_18px_rgba(30,30,30,0.06)]">

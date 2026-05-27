@@ -4,6 +4,7 @@ import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.exceptions.AppException;
 import com.substring.chat.playload.MessageRequest;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
 import com.substring.chat.repositories.RoomRepository;
 import com.substring.chat.service.PresenceTracker;
@@ -25,14 +26,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 @CrossOrigin("${app.frontend.url}")
 public class ChatController {
+    private static final long ROOM_CLEANUP_GRACE_SECONDS = 75;
 
     private final RoomRepository roomRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final PresenceTracker presenceTracker;
+    private final ScheduledExecutorService roomCleanupScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final Map<String, ScheduledFuture<?>> pendingRoomCleanup = new ConcurrentHashMap<>();
 
     public ChatController(
             RoomRepository roomRepository,
@@ -117,6 +126,7 @@ public class ChatController {
             return;
         }
         presenceTracker.addSession(roomId, sessionId, sender);
+        cancelScheduledRoomCleanup(roomId);
         broadcastPresence(roomId);
     }
 
@@ -136,7 +146,7 @@ public class ChatController {
             presenceTracker.removeSession(sessionId);
         }
         if (presenceTracker.isRoomEmpty(roomId)) {
-            clearRoomData(roomId);
+            scheduleRoomCleanup(roomId);
         }
         broadcastPresence(roomId);
     }
@@ -184,15 +194,43 @@ public class ChatController {
             return;
         }
         if (presenceTracker.isRoomEmpty(roomId)) {
-            clearRoomData(roomId);
+            scheduleRoomCleanup(roomId);
         }
         broadcastPresence(roomId);
     }
 
-    private void clearRoomData(String roomId) {
-        Room room = roomRepository.findByRoomId(roomId);
-        if (room != null) {
-            roomRepository.delete(room);
+    @PreDestroy
+    public void shutdownCleanupScheduler() {
+        roomCleanupScheduler.shutdownNow();
+    }
+
+    private void scheduleRoomCleanup(String roomId) {
+        ScheduledFuture<?> existing = pendingRoomCleanup.remove(roomId);
+        if (existing != null) {
+            existing.cancel(false);
+        }
+
+        ScheduledFuture<?> future = roomCleanupScheduler.schedule(() -> {
+            try {
+                if (!presenceTracker.isRoomEmpty(roomId)) {
+                    return;
+                }
+                Room room = roomRepository.findByRoomId(roomId);
+                if (room != null) {
+                    roomRepository.delete(room);
+                }
+            } finally {
+                pendingRoomCleanup.remove(roomId);
+            }
+        }, ROOM_CLEANUP_GRACE_SECONDS, TimeUnit.SECONDS);
+
+        pendingRoomCleanup.put(roomId, future);
+    }
+
+    private void cancelScheduledRoomCleanup(String roomId) {
+        ScheduledFuture<?> future = pendingRoomCleanup.remove(roomId);
+        if (future != null) {
+            future.cancel(false);
         }
     }
 
