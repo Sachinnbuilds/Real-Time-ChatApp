@@ -385,19 +385,19 @@ const ChatPage = () => {
             messages.map((message, index) => (
               <div
                 key={index}
-                className={`mb-3 flex ${
+                className={`mb-3 flex w-full min-w-0 overflow-x-hidden ${
                   message.sender === currentUser ? "justify-end" : "justify-start"
                 } animate-[fadeInMsg_.2s_ease]`}
               >
                 <div
-                    className={`min-w-0 w-fit max-w-[80%] md:max-w-[70%] rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
+                    className={`min-w-0 w-auto max-w-[80%] md:max-w-[70%] shrink rounded-[1.35rem] px-4 py-3 shadow-[0_4px_14px_rgba(40,28,20,0.08)] ${
                     message.sender === currentUser
                       ? "bg-[var(--peach-strong)] text-white"
                       : "bg-white border border-[#e9e4dc] text-[var(--ink)]"
                   }`}
                 >
                   <p className="text-[11px] font-semibold opacity-80 mb-1">{message.sender}</p>
-                  <p className="text-sm leading-6 break-words [overflow-wrap:anywhere]">{message.content}</p>
+                  <p className="text-sm leading-6 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.content}</p>
                   <p className="text-[10px] opacity-60 mt-1.5">{timeAgo(message.timeStamp)}</p>
                 </div>
               </div>
