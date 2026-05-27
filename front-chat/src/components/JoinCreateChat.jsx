@@ -10,6 +10,7 @@ const JoinCreateChat = () => {
     roomId: "",
     userName: "",
   });
+  const [activeMode, setActiveMode] = useState("create");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingAction, setLoadingAction] = useState("");
 
@@ -22,6 +23,7 @@ const JoinCreateChat = () => {
 
   useEffect(() => {
     if (!inviteRoomId) return;
+    setActiveMode("join");
     setDetail((prev) => ({
       ...prev,
       roomId: inviteRoomId,
@@ -91,6 +93,11 @@ const JoinCreateChat = () => {
   }
 
   async function joinChat() {
+    if (!isInviteFlow && activeMode !== "join") {
+      setActiveMode("join");
+      return;
+    }
+    setActiveMode("join");
     if (!validateJoinForm()) return;
     setIsSubmitting(true);
     try {
@@ -117,6 +124,7 @@ const JoinCreateChat = () => {
   }
 
   async function createRoom() {
+    setActiveMode("create");
     if (!validateDisplayNameOnly()) return;
     setIsSubmitting(true);
     try {
@@ -185,24 +193,26 @@ const JoinCreateChat = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="room" className="block text-sm font-semibold text-[var(--ink)] mb-2">
-                Room ID
-              </label>
-              <input
-                id="room"
-                name="roomId"
-                onChange={handleFormInputChange}
-                value={detail.roomId}
-                type="text"
-                placeholder="e.g. java-team-room"
-                readOnly={isInviteFlow}
-                className="w-full bg-[var(--surface-2)] text-[var(--ink)] px-4 py-3 rounded-2xl border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--peach)]"
-              />
-            </div>
+            {(isInviteFlow || activeMode === "join") && (
+              <div>
+                <label htmlFor="room" className="block text-sm font-semibold text-[var(--ink)] mb-2">
+                  Room ID
+                </label>
+                <input
+                  id="room"
+                  name="roomId"
+                  onChange={handleFormInputChange}
+                  value={detail.roomId}
+                  type="text"
+                  placeholder="e.g. java-team-room"
+                  readOnly={isInviteFlow}
+                  className="w-full bg-[var(--surface-2)] text-[var(--ink)] px-4 py-3 rounded-2xl border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--peach)]"
+                />
+              </div>
+            )}
             {!isInviteFlow && (
               <p className="text-xs text-[var(--muted)]">
-                Joining needs a room ID. Creating a room now auto-generates one.
+                Creating auto-generates a room ID. Click Join to enter an existing room.
               </p>
             )}
           </div>
