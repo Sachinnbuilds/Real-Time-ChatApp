@@ -44,6 +44,11 @@ export const createRoomApi = async (roomDetail) => {
   return respone.data;
 };
 
+export const generateRoomApi = async () => {
+  const response = await httpClient.post(`/api/v1/rooms/generate`);
+  return response.data;
+};
+
 export const joinChatApi = async (roomId, userName) => {
   const response = await httpClient.get(
     `/api/v1/rooms/${roomId}?username=${encodeURIComponent(userName)}`

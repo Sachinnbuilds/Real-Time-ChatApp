@@ -10,11 +10,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
 @CrossOrigin("${app.frontend.url}")
 public class RoomController {
+    private static final int GENERATED_ROOM_ID_LENGTH = 10;
+    private static final int MAX_GENERATION_ATTEMPTS = 12;
+    private static final String ROOM_ID_PREFIX = "instant-";
 
     private RoomRepository roomRepository;
     private PresenceTracker presenceTracker;
@@ -50,6 +54,28 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRoom);
 
 
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateRoom() {
+        for (int attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
+            String generatedRoomId = ROOM_ID_PREFIX + randomSuffix(GENERATED_ROOM_ID_LENGTH);
+            if (roomRepository.findByRoomId(generatedRoomId) != null) {
+                continue;
+            }
+
+            Room room = new Room();
+            room.setRoomId(generatedRoomId);
+            Room savedRoom = roomRepository.save(room);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedRoom);
+        }
+
+        throw new AppException(
+                "ROOM_GENERATION_FAILED",
+                "Unable to generate a room right now.",
+                "Please try again.",
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
 
@@ -90,6 +116,16 @@ public class RoomController {
             );
         }
         return ResponseEntity.ok(room);
+    }
+
+    private String randomSuffix(int length) {
+        final char[] alphabet = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
+        StringBuilder value = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = ThreadLocalRandom.current().nextInt(alphabet.length);
+            value.append(alphabet[index]);
+        }
+        return value.toString();
     }
 
 

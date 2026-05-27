@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import chatIcon from "../assets/chat.png";
 import toast from "react-hot-toast";
-import { createRoomApi, joinChatApi, waitForBackendReady } from "../services/RoomService";
+import { generateRoomApi, joinChatApi, waitForBackendReady } from "../services/RoomService";
 import useChatContext from "../context/ChatContext";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
@@ -36,6 +36,7 @@ const JoinCreateChat = () => {
     if (code === "ROOM_FULL") return "Room is full (max 5 people). Try another room.";
     if (code === "USERNAME_TAKEN") return "Display name already in use in this room. Pick another name.";
     if (code === "ROOM_EXISTS") return "Room already exists. Use Join or choose another room id.";
+    if (code === "ROOM_GENERATION_FAILED") return "Unable to generate a room right now. Please try again.";
     return message || hint || "Something went wrong. Please try again.";
   }
 
@@ -46,7 +47,7 @@ const JoinCreateChat = () => {
     });
   }
 
-  function validateForm() {
+  function validateJoinForm() {
     const roomId = detail.roomId.trim();
     const userName = detail.userName.trim();
 
@@ -69,6 +70,19 @@ const JoinCreateChat = () => {
     return true;
   }
 
+  function validateDisplayNameOnly() {
+    const userName = detail.userName.trim();
+    if (!userName) {
+      toast.error("Display name is required");
+      return false;
+    }
+    if (userName.length < 2 || userName.length > 40) {
+      toast.error("Display name must be 2 to 40 characters");
+      return false;
+    }
+    return true;
+  }
+
   async function warmUpBackend(initialAction) {
     setLoadingAction(initialAction);
     await waitForBackendReady(() => {
@@ -77,7 +91,7 @@ const JoinCreateChat = () => {
   }
 
   async function joinChat() {
-    if (!validateForm()) return;
+    if (!validateJoinForm()) return;
     setIsSubmitting(true);
     try {
       await warmUpBackend("Checking chat service...");
@@ -103,12 +117,12 @@ const JoinCreateChat = () => {
   }
 
   async function createRoom() {
-    if (!validateForm()) return;
+    if (!validateDisplayNameOnly()) return;
     setIsSubmitting(true);
     try {
       await warmUpBackend("Checking chat service...");
-      setLoadingAction("Creating room...");
-      const response = await createRoomApi(detail.roomId.trim());
+      setLoadingAction("Generating room...");
+      const response = await generateRoomApi();
       toast.success("Room created");
       setCurrentUser(detail.userName.trim());
       setRoomId(response.roomId);
@@ -186,6 +200,11 @@ const JoinCreateChat = () => {
                 className="w-full bg-[var(--surface-2)] text-[var(--ink)] px-4 py-3 rounded-2xl border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--peach)]"
               />
             </div>
+            {!isInviteFlow && (
+              <p className="text-xs text-[var(--muted)]">
+                Joining needs a room ID. Creating a room now auto-generates one.
+              </p>
+            )}
           </div>
 
           <div className={`mt-6 md:mt-7 ${isInviteFlow ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}`}>
@@ -202,7 +221,7 @@ const JoinCreateChat = () => {
                 onClick={createRoom}
                 className="py-3 rounded-2xl font-bold text-white bg-[var(--ink)] hover:bg-[var(--ink-soft)] disabled:opacity-60"
               >
-                {isSubmitting && loadingAction.startsWith("Creating") ? "Creating..." : "Create"}
+                {isSubmitting && loadingAction.startsWith("Generating") ? "Generating..." : "Generate Room"}
               </button>
             )}
           </div>
