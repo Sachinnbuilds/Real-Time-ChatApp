@@ -1,5 +1,1 @@
-front-chat/package-lock.json linguist-generated=true
-front-chat/.firebase/** linguist-generated=true
-front-chat/public/** linguist-vendored
-assets/** linguist-documentation=true
-front-chat/src/assets/** linguist-documentation=true
+*.js linguistic-detectable=false
