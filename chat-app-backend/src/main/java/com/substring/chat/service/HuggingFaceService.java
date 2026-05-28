@@ -21,7 +21,7 @@ public class HuggingFaceService {
     private static final Logger logger = LoggerFactory.getLogger(HuggingFaceService.class);
 
     private static final String MODEL_URL =
-            "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn";
+            "https://router.huggingface.co/hf-inference/models/philschmid/bart-large-cnn-samsum";
     private static final int MAX_INPUT_CHARS = 3000;
 
     @Value("${huggingface.api.token}")
