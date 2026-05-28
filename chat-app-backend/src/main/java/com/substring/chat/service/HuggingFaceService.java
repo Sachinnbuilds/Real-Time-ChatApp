@@ -2,6 +2,8 @@ package com.substring.chat.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +17,7 @@ import java.util.Map;
 
 @Service
 public class HuggingFaceService {
+    private static final Logger logger = LoggerFactory.getLogger(HuggingFaceService.class);
 
     private static final String MODEL_URL =
             "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn";
@@ -39,12 +42,7 @@ public class HuggingFaceService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiToken);
 
-        Map<String, Object> body = Map.of(
-                "inputs", input,
-                "parameters", Map.of(
-                        "generate_parameters", Map.of("max_length", 150, "min_length", 40)
-                )
-        );
+        Map<String, Object> body = Map.of("inputs", input);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
@@ -56,17 +54,29 @@ public class HuggingFaceService {
             if (root.hasNonNull("summary_text")) {
                 return root.get("summary_text").asText();
             }
+            if (root.hasNonNull("error")) {
+                logger.warn("Hugging Face returned error payload: {}", response.getBody());
+                throw new RuntimeException("HF_API_ERROR");
+            }
             if (root.isArray() && root.size() > 0) {
                 JsonNode summaryNode = root.get(0).get("summary_text");
                 if (summaryNode != null) {
                     return summaryNode.asText();
                 }
             }
+            logger.warn("Unexpected Hugging Face response payload: {}", response.getBody());
             throw new RuntimeException("PARSE_ERROR");
         } catch (HttpStatusCodeException e) {
             int statusCode = e.getStatusCode().value();
+            logger.warn("Hugging Face request failed with status {} and body: {}", statusCode, e.getResponseBodyAsString());
             if (statusCode == 401 || statusCode == 403) {
                 throw new RuntimeException("HF_AUTH_ERROR");
+            }
+            if (statusCode == 400) {
+                throw new RuntimeException("HF_BAD_REQUEST");
+            }
+            if (statusCode == 404) {
+                throw new RuntimeException("HF_MODEL_NOT_FOUND");
             }
             if (statusCode == 429) {
                 throw new RuntimeException("HF_RATE_LIMITED");

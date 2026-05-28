@@ -194,6 +194,22 @@ public class RoomController {
                         HttpStatus.INTERNAL_SERVER_ERROR
                 );
             }
+            if ("HF_BAD_REQUEST".equals(errorCode)) {
+                throw new AppException(
+                        "HF_BAD_REQUEST",
+                        "AI service rejected the summary request.",
+                        "Check the backend logs for the Hugging Face response.",
+                        HttpStatus.BAD_GATEWAY
+                );
+            }
+            if ("HF_MODEL_NOT_FOUND".equals(errorCode)) {
+                throw new AppException(
+                        "HF_MODEL_NOT_FOUND",
+                        "AI model was not found by the provider.",
+                        "Check the Hugging Face model endpoint.",
+                        HttpStatus.BAD_GATEWAY
+                );
+            }
             if ("HF_RATE_LIMITED".equals(errorCode)) {
                 throw new AppException(
                         "HF_RATE_LIMITED",
