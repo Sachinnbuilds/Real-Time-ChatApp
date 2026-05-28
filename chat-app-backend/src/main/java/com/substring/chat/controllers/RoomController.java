@@ -186,6 +186,22 @@ public class RoomController {
                         HttpStatus.INTERNAL_SERVER_ERROR
                 );
             }
+            if ("HF_AUTH_ERROR".equals(errorCode)) {
+                throw new AppException(
+                        "HF_AUTH_ERROR",
+                        "AI service authentication failed.",
+                        "Check the Hugging Face token permissions.",
+                        HttpStatus.INTERNAL_SERVER_ERROR
+                );
+            }
+            if ("HF_RATE_LIMITED".equals(errorCode)) {
+                throw new AppException(
+                        "HF_RATE_LIMITED",
+                        "AI service rate limit reached.",
+                        "Wait a minute and try again.",
+                        HttpStatus.TOO_MANY_REQUESTS
+                );
+            }
             throw new AppException(
                     "SUMMARIZE_FAILED",
                     "Failed to generate summary.",

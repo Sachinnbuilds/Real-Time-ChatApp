@@ -17,7 +17,7 @@ import java.util.Map;
 public class HuggingFaceService {
 
     private static final String MODEL_URL =
-            "https://api-inference.huggingface.co/models/facebook/bart-large-cnn";
+            "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn";
     private static final int MAX_INPUT_CHARS = 3000;
 
     @Value("${huggingface.api.token}")
@@ -41,8 +41,9 @@ public class HuggingFaceService {
 
         Map<String, Object> body = Map.of(
                 "inputs", input,
-                "parameters", Map.of("max_length", 150, "min_length", 40),
-                "options", Map.of("wait_for_model", true)
+                "parameters", Map.of(
+                        "generate_parameters", Map.of("max_length", 150, "min_length", 40)
+                )
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
@@ -52,6 +53,9 @@ public class HuggingFaceService {
                     MODEL_URL, entity, String.class
             );
             JsonNode root = objectMapper.readTree(response.getBody());
+            if (root.hasNonNull("summary_text")) {
+                return root.get("summary_text").asText();
+            }
             if (root.isArray() && root.size() > 0) {
                 JsonNode summaryNode = root.get(0).get("summary_text");
                 if (summaryNode != null) {
@@ -60,7 +64,14 @@ public class HuggingFaceService {
             }
             throw new RuntimeException("PARSE_ERROR");
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 503) {
+            int statusCode = e.getStatusCode().value();
+            if (statusCode == 401 || statusCode == 403) {
+                throw new RuntimeException("HF_AUTH_ERROR");
+            }
+            if (statusCode == 429) {
+                throw new RuntimeException("HF_RATE_LIMITED");
+            }
+            if (statusCode == 503) {
                 throw new RuntimeException("MODEL_LOADING");
             }
             throw new RuntimeException("HF_API_ERROR");
