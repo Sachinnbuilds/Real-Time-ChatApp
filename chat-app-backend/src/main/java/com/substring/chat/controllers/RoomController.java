@@ -4,13 +4,16 @@ import com.substring.chat.entities.Message;
 import com.substring.chat.entities.Room;
 import com.substring.chat.exceptions.AppException;
 import com.substring.chat.repositories.RoomRepository;
+import com.substring.chat.service.HuggingFaceService;
 import com.substring.chat.service.PresenceTracker;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
@@ -22,11 +25,13 @@ public class RoomController {
 
     private RoomRepository roomRepository;
     private PresenceTracker presenceTracker;
+    private HuggingFaceService huggingFaceService;
 
-
-    public RoomController(RoomRepository roomRepository, PresenceTracker presenceTracker) {
+    public RoomController(RoomRepository roomRepository, PresenceTracker presenceTracker,
+                          HuggingFaceService huggingFaceService) {
         this.roomRepository = roomRepository;
         this.presenceTracker = presenceTracker;
+        this.huggingFaceService = huggingFaceService;
     }
 
     //create room
@@ -126,6 +131,75 @@ public class RoomController {
             value.append(alphabet[index]);
         }
         return value.toString();
+    }
+
+    // AI summarize room conversation
+    @GetMapping("/{roomId}/summarize")
+    public ResponseEntity<?> summarizeRoom(@PathVariable String roomId) {
+        Room room = roomRepository.findByRoomId(roomId);
+        if (room == null) {
+            throw new AppException(
+                    "ROOM_NOT_FOUND",
+                    "Room not found.",
+                    "The room may have been deleted.",
+                    HttpStatus.NOT_FOUND
+            );
+        }
+
+        List<Message> messages = room.getMessages();
+        if (messages.size() < 3) {
+            throw new AppException(
+                    "NOT_ENOUGH_MESSAGES",
+                    "Not enough messages to summarize.",
+                    "Send at least 3 messages before summarizing.",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        List<Message> last30 = messages.subList(
+                Math.max(0, messages.size() - 30),
+                messages.size()
+        );
+
+        String formatted = last30.stream()
+                .map(m -> m.getSender() + ": " + m.getContent())
+                .collect(Collectors.joining("\n"));
+
+        try {
+            String summary = huggingFaceService.summarize(formatted);
+            return ResponseEntity.ok(Map.of("summary", summary));
+        } catch (RuntimeException e) {
+            String errorCode = e.getMessage();
+            if ("MODEL_LOADING".equals(errorCode)) {
+                throw new AppException(
+                        "MODEL_LOADING",
+                        "AI model is warming up.",
+                        "Wait 20 seconds and try again.",
+                        HttpStatus.SERVICE_UNAVAILABLE
+                );
+            }
+            if ("TOKEN_MISSING".equals(errorCode)) {
+                throw new AppException(
+                        "TOKEN_MISSING",
+                        "AI service is not configured.",
+                        "Contact the administrator.",
+                        HttpStatus.INTERNAL_SERVER_ERROR
+                );
+            }
+            throw new AppException(
+                    "SUMMARIZE_FAILED",
+                    "Failed to generate summary.",
+                    "Try again in a moment.",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        } catch (Exception e) {
+            throw new AppException(
+                    "SUMMARIZE_FAILED",
+                    "Failed to generate summary.",
+                    "Try again in a moment.",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
 

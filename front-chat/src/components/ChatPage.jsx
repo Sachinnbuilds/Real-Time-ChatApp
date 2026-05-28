@@ -6,7 +6,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import toast from "react-hot-toast";
 import { baseURL } from "../config/AxiosHelper";
-import { getMessagess } from "../services/RoomService";
+import { getMessagess, summarizeRoom } from "../services/RoomService";
 import { timeAgo } from "../config/helper";
 
 const MAX_MESSAGE_LENGTH = 500;
@@ -25,6 +25,9 @@ const ChatPage = () => {
   const [onlineCount, setOnlineCount] = useState(0);
   const [typingState, setTypingState] = useState({});
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const chatBoxRef = useRef(null);
   const composerInputRef = useRef(null);
   const composerContainerRef = useRef(null);
@@ -287,6 +290,29 @@ const ChatPage = () => {
     navigate("/");
   }
 
+  async function handleSummarize() {
+    if (isSummarizing) return;
+    setIsSummarizing(true);
+    setSummary("");
+    try {
+      const data = await summarizeRoom(roomId);
+      setSummary(data.summary || "No summary available.");
+      setShowSummaryModal(true);
+    } catch (error) {
+      const code = error?.response?.data?.code;
+      const message = error?.response?.data?.message;
+      if (code === "NOT_ENOUGH_MESSAGES") {
+        toast.error("Send at least 3 messages before summarizing.");
+      } else if (code === "MODEL_LOADING") {
+        toast.error("AI is warming up. Wait 20 seconds and try again.");
+      } else {
+        toast.error(message || "Could not generate summary. Try again.");
+      }
+    } finally {
+      setIsSummarizing(false);
+    }
+  }
+
   const isConnected = connectionState === "CONNECTED";
   const inputLength = input.trim().length;
   const cannotSend = !isConnected || inputLength === 0 || inputLength > MAX_MESSAGE_LENGTH;
@@ -378,12 +404,21 @@ const ChatPage = () => {
                 <span className="text-xs md:text-sm font-bold text-[#ffd8c4]">{onlineCount}</span>
               </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="h-10 md:h-10 rounded-lg md:rounded-xl bg-white text-[var(--ink)] px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 w-full md:w-auto md:min-w-[146px]"
-              >
-                Leave Room
-              </button>
+              <div className="flex gap-2 w-full md:w-auto">
+                <button
+                  onClick={handleSummarize}
+                  disabled={isSummarizing}
+                  className="h-10 flex-1 md:flex-none rounded-lg md:rounded-xl bg-[#7c3aed] text-white px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#6d28d9] disabled:opacity-60 border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:min-w-[130px]"
+                >
+                  {isSummarizing ? "Thinking..." : "✦ Summarize"}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="h-10 flex-1 md:flex-none rounded-lg md:rounded-xl bg-white text-[var(--ink)] px-3 md:px-4 inline-flex items-center justify-center whitespace-nowrap text-xs md:text-sm font-bold hover:bg-[#f3f3f3] border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:min-w-[130px]"
+                >
+                  Leave Room
+                </button>
+              </div>
             </div>
           </div>
 
@@ -528,6 +563,30 @@ const ChatPage = () => {
           </div>
         </div>
       </div>
+      {showSummaryModal && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-3 md:px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-4 md:p-6 max-h-[95dvh] overflow-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--muted)]">AI Summary</p>
+                <h2 className="text-xl font-bold text-[var(--ink)]">Conversation Summary</h2>
+              </div>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="h-9 w-9 rounded-full bg-[var(--surface-2)] text-[var(--ink)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peach)]"
+              >
+                <MdClose size={20} />
+              </button>
+            </div>
+            <div className="rounded-2xl bg-[#f5f3ff] border border-[#e0d9ff] px-4 py-4">
+              <p className="text-sm text-[var(--ink)] leading-6">{summary}</p>
+            </div>
+            <p className="text-[10px] text-[var(--muted)] mt-3 text-center">
+              Generated by facebook/bart-large-cnn · Last 30 messages
+            </p>
+          </div>
+        </div>
+      )}
       {showInviteModal && (
         <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-3 md:px-4">
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-4 md:p-6 max-h-[95dvh] overflow-auto">

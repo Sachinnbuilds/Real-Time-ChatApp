@@ -64,3 +64,11 @@ export const getMessagess = async (roomId, size = 50, page = 0) => {
   );
   return response.data;
 };
+
+export const summarizeRoom = async (roomId) => {
+  const encodedRoomId = encodeURIComponent(roomId);
+  const response = await httpClient.get(
+    `/api/v1/rooms/${encodedRoomId}/summarize`
+  );
+  return response.data;
+};
